@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-users me-2"></i> User Management</h1>
+            <p class="lead">Manage user accounts, permissions, and frequent flyer status</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_add_user') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i> Add New User
+            </a>
+            <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-secondary ms-2">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Filter Users</h5>
+            <form id="filter-form" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Frequent Flyer Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Standard" {% if request.args.get('status') == 'Standard' %}selected{% endif %}>Standard</option>
+                        <option value="Silver" {% if request.args.get('status') == 'Silver' %}selected{% endif %}>Silver</option>
+                        <option value="Gold" {% if request.args.get('status') == 'Gold' %}selected{% endif %}>Gold</option>
+                        <option value="Platinum" {% if request.args.get('status') == 'Platinum' %}selected{% endif %}>Platinum</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select id="role" name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="admin" {% if request.args.get('role') == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="user" {% if request.args.get('role') == 'user' %}selected{% endif %}>User</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="join_date" class="form-label">Join Date After</label>
+                    <input type="date" id="join_date" name="join_date" class="form-control" value="{{ request.args.get('join_date') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="min_miles" class="form-label">Min. Frequent Flyer Miles</label>
+                    <input type="number" id="min_miles" name="min_miles" class="form-control" value="{{ request.args.get('min_miles') }}" min="0">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('routes.admin_users') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-redo me-2"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <!-- Search Input -->
+            <div class="mb-3">
+                <input type="text" id="search-users" class="form-control" placeholder="Search users by name or email">
+            </div>
+            {% if users.total > 0 %}
+            <div class="mb-3 text-end text-muted small">
+                Showing {{ ((users.page-1)*users.per_page + 1) }}–{{ ((users.page-1)*users.per_page + users.items|length) }} of {{ users.total }} results
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Frequent Flyer</th>
+                            <th>Bookings</th>
+                            <th>Joined</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-container bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                    </div>
+                                    <div>
+                                        <div class="user-fullname">{{ user.first_name }} {{ user.last_name }}</div>
+                                        <small class="user-username text-muted">@{{ user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="user-email">{{ user.email }}</div>
+                                <small class="text-muted">{{ user.phone_number if user.phone_number else 'No phone' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if user.frequent_flyer_status == 'Standard' %}bg-secondary{% elif user.frequent_flyer_status == 'Silver' %}bg-light text-dark border{% elif user.frequent_flyer_status == 'Gold' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                    {{ user.frequent_flyer_status }}
+                                </span>
+                                <div><small>{{ user.frequent_flyer_miles }} miles</small></div>
+                            </td>
+                            <td>{{ user.bookings|length }}</td>
+                            <td>{{ user.date_joined.strftime('%d %b %Y') }}</td>
+                            <td>
+                                <span class="badge {% if user.is_admin %}bg-danger{% else %}bg-success{% endif %}">
+                                    {% if user.is_admin %}Admin{% else %}User{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_edit_user', user_id=user.id) }}" class="dropdown-item">
+                                                <i class="fas fa-edit me-2"></i> Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_user_bookings', user_id=user.id) }}" class="dropdown-item">
+                                                <i class="fas fa-ticket-alt me-2"></i> View Bookings
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#updateFFModal{{ user.id }}">
+                                                <i class="fas fa-award me-2"></i> Update FF Status
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a href="#" class="dropdown-item {% if user.is_admin %}text-warning{% else %}text-primary{% endif %}" data-bs-toggle="modal" data-bs-target="#toggleAdminModal{{ user.id }}">
+                                                <i class="fas {% if user.is_admin %}fa-user-minus{% else %}fa-user-shield{% endif %} me-2"></i> 
+                                                {% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}">
+                                                <i class="fas fa-trash me-2"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- FF Status Modal -->
+                                <div class="modal fade" id="updateFFModal{{ user.id }}" tabindex="-1" aria-labelledby="updateFFModalLabel{{ user.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="updateFFModalLabel{{ user.id }}">Update Frequent Flyer Status</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ url_for('routes.admin_update_ff_status', user_id=user.id) }}" method="post">
+                                                    <div class="mb-3">
+                                                        <label for="ff_status{{ user.id }}" class="form-label">Frequent Flyer Status</label>
+                                                        <select class="form-select" id="ff_status{{ user.id }}" name="ff_status">
+                                                            <option value="Standard" {% if user.frequent_flyer_status == 'Standard' %}selected{% endif %}>Standard</option>
+                                                            <option value="Silver" {% if user.frequent_flyer_status == 'Silver' %}selected{% endif %}>Silver</option>
+                                                            <option value="Gold" {% if user.frequent_flyer_status == 'Gold' %}selected{% endif %}>Gold</option>
+                                                            <option value="Platinum" {% if user.frequent_flyer_status == 'Platinum' %}selected{% endif %}>Platinum</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="ff_miles{{ user.id }}" class="form-label">Frequent Flyer Miles</label>
+                                                        <input type="number" class="form-control" id="ff_miles{{ user.id }}" name="ff_miles" value="{{ user.frequent_flyer_miles }}" min="0">
+                                                    </div>
+                                                    <div class="d-flex justify-content-end">
+                                                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Update Status</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Toggle Admin Modal -->
+                                <div class="modal fade" id="toggleAdminModal{{ user.id }}" tabindex="-1" aria-labelledby="toggleAdminModalLabel{{ user.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="toggleAdminModalLabel{{ user.id }}">
+                                                    {% if user.is_admin %}Remove Admin Privileges{% else %}Grant Admin Privileges{% endif %}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to {% if user.is_admin %}remove admin privileges from{% else %}make {% endif %} 
+                                                <strong>{{ user.first_name }} {{ user.last_name }}</strong>?</p>
+                                                
+                                                {% if user.is_admin %}
+                                                <p class="text-warning">This user will no longer have access to admin features.</p>
+                                                {% else %}
+                                                <p class="text-danger">This will give the user full administrative access to the system, including user management and flight operations.</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('routes.admin_toggle_admin', user_id=user.id) }}" method="post">
+                                                    <button type="submit" class="btn {% if user.is_admin %}btn-warning{% else %}btn-danger{% endif %}">
+                                                        {% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">Confirm User Deletion</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete user <strong>{{ user.first_name }} {{ user.last_name }}</strong>?</p>
+                                                <p class="text-danger">This action cannot be undone and will also delete all related bookings and payment records.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('routes.admin_delete_user', user_id=user.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">Delete User</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    <li class="page-item {% if not prev_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1" aria-disabled="{{ 'true' if not prev_url else 'false' }}">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+                    <li class="page-item {% if not next_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ next_url or '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No users found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Reliable search for paginated users table using explicit class selectors
+    document.getElementById('search-users').addEventListener('input', function() {
+        const searchValue = this.value.trim().toLowerCase();
+        const tableRows = document.querySelectorAll('#users-table tbody tr');
+        tableRows.forEach(row => {
+            // Use explicit classes for robust selection
+            const nameElem = row.querySelector('.user-fullname');
+            const usernameElem = row.querySelector('.user-username');
+            const emailElem = row.querySelector('.user-email');
+            const name = nameElem ? nameElem.textContent.trim().toLowerCase() : '';
+            const username = usernameElem ? usernameElem.textContent.trim().toLowerCase() : '';
+            const email = emailElem ? emailElem.textContent.trim().toLowerCase() : '';
+            if (
+                name.includes(searchValue) ||
+                username.includes(searchValue) ||
+                email.includes(searchValue)
+            ) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

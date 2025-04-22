@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - SkyWings{% endblock %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='js/booking_management.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-ticket-alt me-2"></i> My Bookings</h1>
+            <p class="lead">Manage your flight reservations</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.index') }}#search" class="btn btn-info">
+                <i class="fas fa-plus me-2"></i> Book New Flight
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter/Search/Sort Controls -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end flex-wrap">
+                <!-- First row: Booking search, Source, Destination -->
+                <div class="col-md-4 col-12 mb-2 mb-md-0">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="booking-search" name="booking_search" placeholder="Search by booking reference or flight" value="{{ request.args.get('booking_search', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-2 mb-md-0">
+                    <input type="text" class="form-control" name="source" placeholder="Source City" value="{{ source or '' }}">
+                </div>
+                <div class="col-md-4 col-6 mb-2 mb-md-0">
+                    <input type="text" class="form-control" name="destination" placeholder="Destination City" value="{{ destination or '' }}">
+                </div>
+                <!-- Second row: Status, Sort, Filter/Reset -->
+                <div class="w-100 d-md-none"></div>
+                <div class="col-md-4 col-12">
+                    <select class="form-select" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="Confirmed" {% if request.args.get('status') == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                        <option value="Reserved" {% if request.args.get('status') == 'Reserved' %}selected{% endif %}>Reserved</option>
+                        <option value="Cancelled" {% if request.args.get('status') == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-4 col-6">
+                    <select class="form-select" name="sort">
+                        <option value="date-asc" {% if request.args.get('sort') == 'date-asc' %}selected{% endif %}>Departure: Earliest</option>
+                        <option value="date-desc" {% if request.args.get('sort') == 'date-desc' %}selected{% endif %}>Departure: Latest</option>
+                        <option value="booking-date-desc" {% if request.args.get('sort') == 'booking-date-desc' %}selected{% endif %}>Booking: Newest</option>
+                        <option value="booking-date-asc" {% if request.args.get('sort') == 'booking-date-asc' %}selected{% endif %}>Booking: Oldest</option>
+                        <option value="price-desc" {% if request.args.get('sort') == 'price-desc' %}selected{% endif %}>Price: Highest</option>
+                        <option value="price-asc" {% if request.args.get('sort') == 'price-asc' %}selected{% endif %}>Price: Lowest</option>
+                    </select>
+                </div>
+                <div class="col-md-4 col-6 d-flex gap-2">
+                    <button type="submit" class="btn btn-info w-100"><i class="fas fa-filter me-2"></i>Filter</button>
+                    <a href="{{ url_for('routes.my_bookings') }}" class="btn btn-secondary w-100">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results count -->
+    {% if pagination and pagination.total > 0 %}
+    <div class="mb-3 text-end text-muted small">
+        Showing {{ ((pagination.page-1)*pagination.per_page + 1) }}&ndash;{{ ((pagination.page-1)*pagination.per_page + bookings|length) }} of {{ pagination.total }} results
+    </div>
+    {% endif %}
+
+    <!-- Bookings List -->
+    <div class="bookings-container">
+        {% if bookings %}
+            {% for booking in bookings %}
+            <div class="card booking-card mb-4" 
+                 data-status="{{ booking.status }}" 
+                 data-departure="{{ booking.flight.departure_time }}" 
+                 data-booking-date="{{ booking.booking_date }}"
+                 data-price="{{ booking.total_price }}"
+                 data-booking-ref="{{ booking.booking_reference }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ booking.flight.flight_number }} - {{ booking.booking_reference }}</h5>
+                    <span class="booking-status status-{{ booking.status.lower() }}">{{ booking.status }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card-title fw-bold">
+                                {{ booking.flight.origin_airport.city }} ({{ booking.flight.origin_airport.code }}) to 
+                                {{ booking.flight.destination_airport.city }} ({{ booking.flight.destination_airport.code }})
+                            </div>
+                            <p class="card-text mb-2">
+                                <strong>Departure:</strong> {{ booking.flight.departure_time.strftime('%d %b %Y, %H:%M') }}
+                            </p>
+                            <p class="card-text mb-2">
+                                <strong>Arrival:</strong> {{ booking.flight.arrival_time.strftime('%d %b %Y, %H:%M') }}
+                            </p>
+                            <p class="card-text mb-2">
+                                <strong>Passengers:</strong> {{ booking.booking_details|length }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Booked on:</strong> {{ booking.booking_date.strftime('%d %b %Y') }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <div class="mb-2">
+                                <span class="text-muted">Total Price:</span>
+                                <span class="fs-5 fw-bold text-info">${{ booking.total_price }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-{{ 'success' if booking.payment_status == 'Paid' else 'warning' }}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-md-end gap-2">
+                                <button class="btn btn-sm btn-outline-info booking-details-toggle">
+                                    Show Details <i class="fas fa-chevron-down"></i>
+                                </button>
+                                {% if booking.status != 'Cancelled' and (booking.flight.departure_time - now).total_seconds() > 86400 %}
+                                <button class="btn btn-sm btn-outline-danger cancel-booking-btn"
+                                        data-booking-ref="{{ booking.booking_reference }}"
+                                        data-departure="{{ booking.flight.departure_time }}"
+                                        data-price="{{ booking.total_price }}">
+                                    Cancel
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-details mt-4" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-3">Flight Details</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Aircraft:</strong> {{ booking.flight.aircraft.model }}</p>
+                                <p class="mb-1"><strong>Flight Status:</strong> {{ booking.flight.status }}</p>
+                                {% set duration = booking.flight.arrival_time - booking.flight.departure_time %}
+                                {% set hours, remainder = divmod(duration.seconds, 3600) %}
+                                {% set minutes, _ = divmod(remainder, 60) %}
+                                <p class="mb-1"><strong>Duration:</strong> {{ hours }}h {{ minutes }}m</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Origin Airport:</strong> {{ booking.flight.origin_airport.name }}</p>
+                                <p class="mb-1"><strong>Destination Airport:</strong> {{ booking.flight.destination_airport.name }}</p>
+                                <p class="mb-1"><strong>Booking Date:</strong> {{ booking.booking_date.strftime('%d %b %Y, %H:%M') }}</p>
+                            </div>
+                        </div>
+                        
+                        <h6 class="border-bottom pb-2 mb-3">Passenger Information</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Seat</th>
+                                        <th>Passport</th>
+                                        <th>Special Requests</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for detail in booking.booking_details %}
+                                    <tr>
+                                        <td>{{ detail.passenger_first_name }} {{ detail.passenger_last_name }}</td>
+                                        <td>{{ detail.seat.seat_number }} ({{ detail.seat.seat_class }})</td>
+                                        <td>{{ detail.passenger_passport }}</td>
+                                        <td>{{ detail.special_requests or 'None' }}</td>
+                                        <td>
+                                            {% if booking.status == 'Confirmed' and booking.flight.departure_time > now %}
+                            <button class="btn btn-sm btn-outline-info print-boarding-pass"
+                                data-booking-ref="{{ booking.booking_reference }}"
+                                data-passenger="{{ detail.passenger_first_name }} {{ detail.passenger_last_name }}"
+                                data-flight="{{ booking.flight.flight_number }}"
+                                data-date="{{ booking.flight.departure_time.strftime('%d %b %Y') }}"
+                                data-from="{{ booking.flight.origin_airport.code }}"
+                                data-to="{{ booking.flight.destination_airport.code }}"
+                                data-seat="{{ detail.seat.seat_number }}"
+                                onclick="storeBoardingPassData(this)">
+                                <i class="fas fa-print"></i> Boarding Pass
+                            </button>
+                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if booking.status == 'Cancelled' %}
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-circle me-2"></i> This booking has been cancelled.
+                            {% for payment in booking.payments if payment.amount < 0 %}
+                            A refund of ${{ (-payment.amount)|abs }} was processed on {{ payment.payment_date.strftime('%d %b %Y') }}.
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <!-- Pagination Controls -->
+            <nav aria-label="Bookings pagination" class="mt-4">
+                <ul class="pagination justify-content-center flex-wrap">
+                    {% set window = 2 %}
+                    {% set first_page = 1 %}
+                    {% set last_page = pagination.pages %}
+                    {% set current = pagination.page %}
+                    {% set start = current - window if current - window > 1 else 1 %}
+                    {% set end = current + window if current + window < last_page else last_page %}
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('routes.my_bookings', page=pagination.prev_num, source=source, destination=destination, booking_search=request.args.get('booking_search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', '')) }}">&laquo; Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>
+                    {% endif %}
+                    {% if start > 1 %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('routes.my_bookings', page=1, source=source, destination=destination, booking_search=request.args.get('booking_search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', '')) }}">1</a></li>
+                    {% if start > 2 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endif %}
+                    {% for p in range(start, end + 1) %}
+                    <li class="page-item {% if p == current %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('routes.my_bookings', page=p, source=source, destination=destination, booking_search=request.args.get('booking_search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', '')) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if end < last_page %}
+                    {% if end < last_page - 1 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('routes.my_bookings', page=last_page, source=source, destination=destination, booking_search=request.args.get('booking_search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', '')) }}">{{ last_page }}</a></li>
+                    {% endif %}
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('routes.my_bookings', page=pagination.next_num, source=source, destination=destination, booking_search=request.args.get('booking_search', ''), status=request.args.get('status', ''), sort=request.args.get('sort', '')) }}">Next &raquo;</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% else %}
+            <div id="bookings-empty-state" class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-ticket-alt fa-4x text-muted"></i>
+                </div>
+                <h3>No Bookings Found</h3>
+                <p class="text-muted mb-4">You don't have any bookings yet. Start your journey by booking a flight!</p>
+                <a href="{{ url_for('routes.index') }}#search" class="btn btn-info">
+                    <i class="fas fa-search me-2"></i> Search for Flights
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

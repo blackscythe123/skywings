@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-cogs me-2"></i> Admin Dashboard</h1>
+            <p class="lead">System management and configuration</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Quick Stats -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Statistics</h5>
+                    <div class="row g-4 mt-2">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-primary bg-opacity-10 rounded text-center">
+                                <h3 class="mb-0">{{ total_users }}</h3>
+                                <p class="mb-0">Users</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-success bg-opacity-10 rounded text-center">
+                                <h3 class="mb-0">{{ total_flights }}</h3>
+                                <p class="mb-0">Flights</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-info bg-opacity-10 rounded text-center">
+                                <h3 class="mb-0">{{ total_bookings }}</h3>
+                                <p class="mb-0">Bookings</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded text-center">
+                                <h3 class="mb-0">${{ revenue }}</h3>
+                                <p class="mb-0">Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Cards -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Flight Management</h5>
+                    <div class="list-group mt-3">
+                        <a href="{{ url_for('routes.admin_flights') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-plane me-2"></i> All Flights
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ total_flights }}</span>
+                        </a>
+                        <a href="{{ url_for('routes.admin_add_flight') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2"></i> Add New Flight
+                        </a>
+                        <a href="{{ url_for('routes.admin_airports') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-building me-2"></i> Airports
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ total_airports }}</span>
+                        </a>
+                        <a href="{{ url_for('routes.admin_aircraft') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-plane-departure me-2"></i> Aircraft
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ total_aircraft }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">User Management</h5>
+                    <div class="list-group mt-3">
+                        <a href="{{ url_for('routes.admin_users') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-users me-2"></i> All Users
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ total_users }}</span>
+                        </a>
+                        <a href="{{ url_for('routes.admin_bookings') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-ticket-alt me-2"></i> All Bookings
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ total_bookings }}</span>
+                        </a>
+                        <a href="{{ url_for('routes.admin_add_user') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-plus me-2"></i> Add New User
+                        </a>
+                        <a href="{{ url_for('routes.admin_reports') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-line me-2"></i> Reports & Analytics 
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Bookings</h5>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Flight</th>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Price</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.booking_reference }}</td>
+                                    <td>{{ booking.flight.flight_number }}</td>
+                                    <td>{{ booking.user.first_name }} {{ booking.user.last_name }}</td>
+                                    <td>{{ booking.booking_date.strftime('%d %b %Y') }}</td>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'Confirmed' %}bg-success{% elif booking.status == 'Reserved' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </td>
+                                    <td>${{ booking.total_price }}</td>
+                                    <td>
+                                        <a href="{{ url_for('routes.admin_booking_details', booking_id=booking.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-3">
+                        <a href="{{ url_for('routes.admin_bookings') }}" class="btn btn-primary">View All Bookings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

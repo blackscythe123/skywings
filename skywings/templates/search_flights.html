@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Flights to {{ destination }}</h2>
+
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Flight Number</th>
+                    <th>Origin</th>
+                    <th>Destination</th>
+                    <th>Departure Time</th>
+                    <th>Arrival Time</th>
+                    <th>Status</th>
+                    <th>Economy Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                    <tr>
+                        <td>{{ flight.flight_number }}</td>
+                        <td>{{ flight.origin.city }}, {{ flight.origin.country }}</td>
+                        <td>{{ flight.destination.city }}, {{ flight.destination.country }}</td>
+                        <td>{{ flight.departure_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ flight.arrival_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ flight.status }}</td>
+                        <td>${{ flight.economy_base_price }}</td>
+                        <td>
+                            <a href="{{ url_for('routes.book_flight', flight_id=flight.id) }}" class="btn btn-primary btn-sm">Book Now</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <a href="{{ url_for('routes.index') }}" class="btn btn-secondary mt-3">Back to Home</a>
+</div>
+{% endblock %}

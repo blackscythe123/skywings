@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Your Seats - SkyWings{% endblock %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='js/seat_selection.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-chair me-2"></i> Select Your Seats</h1>
+        <p class="lead">
+            {{ origin_airport.city }} ({{ origin_airport.code }}) to {{ destination_airport.city }} ({{ destination_airport.code }})
+            | Flight {{ flight.flight_number }} | {{ flight.departure_time.strftime('%d %b %Y, %H:%M') }}
+        </p>
+    </div>
+
+    <div class="row">
+        <!-- Seat Map -->
+        <div class="col-lg-8 mb-4">
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plane me-2"></i> {{ travel_class }} Cabin
+                        </h5>
+                        <div class="dropdown">
+                            <select id="seat-class" class="form-select form-select-sm" style="width: auto;">
+                                <option value="{{ travel_class }}" selected>{{ travel_class }}</option>
+                                {% if travel_class != "Economy" %}<option value="Economy">Economy</option>{% endif %}
+                                {% if travel_class != "Business" %}<option value="Business">Business</option>{% endif %}
+                                {% if travel_class != "First Class" %}<option value="First Class">First Class</option>{% endif %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="seat-map-container p-3" data-flight-id="{{ flight.id }}" data-max-passengers="{{ passengers }}" data-selected-seats="{{ ','.join(selected_seats) if selected_seats else '' }}">
+                        {% if seat_map %}
+                            {% for row, seats in seat_map.items() %}
+                                <div class="seat-class-section" data-class="{{ travel_class }}">
+                                    <div class="text-center mb-2 mt-4">
+                                        <h6>Row {{ row }}</h6>
+                                    </div>
+                                    <div class="seat-map-row">
+                                        <div class="seat-map-row-label">{{ row }}</div>
+                                        
+                                        {% for seat in seats %}
+                                            {% if loop.index == 1 or loop.index == 4 %}
+                                                <!-- Side seats and aisle -->
+                                                {% if seat.seat_number.endswith('A') or seat.seat_number.endswith('D') %}
+                                                    <div class="seat {{ 'booked' if seat.is_booked else 'available' }} {{ 'selected' if seat.id|string in selected_seats else '' }}" 
+                                                        data-seat-id="{{ seat.id }}" 
+                                                        data-seat-number="{{ seat.seat_number }}"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="{{ 'Booked' if seat.is_booked else 'Available' }} - {{ seat.seat_number }}">
+                                                        {{ seat.seat_number[-1] }}
+                                                    </div>
+                                                    <div class="aisle"></div>
+                                                {% else %}
+                                                    <div class="seat {{ 'booked' if seat.is_booked else 'available' }} {{ 'selected' if seat.id|string in selected_seats else '' }}" 
+                                                        data-seat-id="{{ seat.id }}" 
+                                                        data-seat-number="{{ seat.seat_number }}"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="{{ 'Booked' if seat.is_booked else 'Available' }} - {{ seat.seat_number }}">
+                                                        {{ seat.seat_number[-1] }}
+                                                    </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="seat {{ 'booked' if seat.is_booked else 'available' }} {{ 'selected' if seat.id|string in selected_seats else '' }}" 
+                                                    data-seat-id="{{ seat.id }}" 
+                                                    data-seat-number="{{ seat.seat_number }}"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="top"
+                                                    title="{{ 'Booked' if seat.is_booked else 'Available' }} - {{ seat.seat_number }}">
+                                                    {{ seat.seat_number[-1] }}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        <div class="seat-map-row-label">{{ row }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-warning m-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i> No seats available for the selected class.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button id="legend-toggle" class="btn btn-link p-0">
+                        Show Legend <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div id="seat-legend" class="seat-legend mt-3" style="display: none;">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--bs-secondary);"></div>
+                            <span>Available</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--bs-success);"></div>
+                            <span>Selected</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--bs-danger);"></div>
+                            <span>Booked</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="seat-info" class="seat-info mt-4" style="display: none;">
+                <button id="seat-info-toggle" class="btn btn-link p-0 mb-3">
+                    Hide Seat Information <i class="fas fa-chevron-up"></i>
+                </button>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>{{ travel_class }} Class Features</h6>
+                        <ul class="list-unstyled">
+                            {% if travel_class == "Economy" %}
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Standard Seat</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Meal Service</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Entertainment System</li>
+                                <li><i class="fas fa-times-circle text-danger me-2"></i> Priority Boarding</li>
+                                <li><i class="fas fa-times-circle text-danger me-2"></i> Extra Legroom</li>
+                            {% elif travel_class == "Business" %}
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Spacious Seat</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Premium Meals</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Entertainment System</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Priority Boarding</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Extra Legroom</li>
+                            {% else %}
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Luxury Suite</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Gourmet Dining</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Premium Entertainment</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Priority Services</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i> Lie-Flat Bed</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-8">
+                        <h6>Seating Tips</h6>
+                        <ul>
+                            <li>Window seats (A, F) offer views and a wall to lean against.</li>
+                            <li>Aisle seats (C, D) provide easier access to the bathroom and to stretch.</li>
+                            <li>Middle seats (B, E) in Economy are best avoided unless traveling with companions.</li>
+                            <li>Seats near the front allow for quicker deplaning.</li>
+                            <li>Seats near the back may experience more turbulence.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seat Selection Summary -->
+        <div class="col-lg-4">
+            <div class="card bg-dark sticky-top" style="top: 20px; z-index: 1">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i> Your Selection</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Flight:</span>
+                            <span class="fw-bold">{{ flight.flight_number }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Date:</span>
+                            <span class="fw-bold">{{ flight.departure_time.strftime('%d %b %Y') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Time:</span>
+                            <span class="fw-bold">{{ flight.departure_time.strftime('%H:%M') }} - {{ flight.arrival_time.strftime('%H:%M') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Class:</span>
+                            <span class="fw-bold">{{ travel_class }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Passengers:</span>
+                            <span class="fw-bold">{{ passengers }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-3">Selected Seats</h6>
+                        <ul id="selected-seats" class="list-group">
+                            <li class="list-group-item">No seats selected</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-2">Price Summary</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Price per seat:</span>
+                            <span id="seat-price" class="fw-bold" data-price="{{ price_per_seat }}">${{ price_per_seat }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Taxes & Fees:</span>
+                            <span class="fw-bold">Included</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Total:</span>
+                            <span id="selected-price" class="fw-bold text-info">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fs-5">Total Price:</span>
+                            <span id="total-price" class="fs-5 fw-bold text-info">$0.00</span>
+                        </div>
+                        <button id="continue-btn" class="btn btn-info w-100" data-next-url="{% if 'return_flight' in request.args %}{{ url_for('routes.passenger_details', departure_flight=flight.id, return_flight=request.args.get('return_flight')) }}{% else %}{{ url_for('routes.passenger_details', departure_flight=flight.id) }}{% endif %}" disabled>
+                            Continue to Passenger Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container for notifications -->
+<div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050"></div>
+{% endblock %}

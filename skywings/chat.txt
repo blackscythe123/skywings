@@ -1,0 +1,24 @@
+airports_data = [
+            ("JFK", "John F. Kennedy International Airport", "New York", "USA", 40.6413, -73.7781),
+            ("LAX", "Los Angeles International Airport", "Los Angeles", "USA", 33.9416, -118.4085),
+            ("SFO", "San Francisco International Airport", "San Francisco", "USA", 37.7749, -122.4194),
+            ("ORD", "O'Hare International Airport", "Chicago", "USA", 41.9742, -87.9073),
+            ("MIA", "Miami International Airport", "Miami", "USA", 25.7959, -80.2870),
+            ("LHR", "Heathrow Airport", "London", "UK", 51.4700, -0.4543),
+            ("CDG", "Charles de Gaulle Airport", "Paris", "France", 48.8566, 2.3522),
+            ("FRA", "Frankfurt Airport", "Frankfurt", "Germany", 50.0379, 8.5622),
+            ("AMS", "Amsterdam Airport Schiphol", "Amsterdam", "Netherlands", 52.3105, 4.7683),
+            ("MAD", "Adolfo Suárez Madrid–Barajas Airport", "Madrid", "Spain", 40.4983, -3.5676),
+            ("FCO", "Leonardo da Vinci International Airport", "Rome", "Italy", 41.8003, 12.2389),
+            ("SYD", "Sydney Airport", "Sydney", "Australia", -33.9399, 151.1753),
+            ("HND", "Haneda Airport", "Tokyo", "Japan", 35.5494, 139.7798),
+            ("SIN", "Singapore Changi Airport", "Singapore", "Singapore", 1.3644, 103.9915),
+            ("DXB", "Dubai International Airport", "Dubai", "UAE", 25.2532, 55.3657),
+        ]
+
+        airports = []
+        for code, name, city, country, lat, lon in airports_data:
+            airport = Airport(code=code, name=name, city=city, country=country, latitude=lat, longitude=lon)
+            airports.append(airport)
+        db.session.add_all(airports)
+        db.session.commit()

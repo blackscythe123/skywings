@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="chat-container">
+    <div class="chatbot-header">
+        <div class="header-content">
+            <img src="{{ url_for('static', filename='skywings-logo.png') }}" alt="SkyWings Logo" class="logo">
+            <h1>SkyWings Virtual Assistant</h1>
+        </div>
+    </div>
+    
+    <div id="chatbox" class="chat-box">
+        <div id="chat-messages" class="message-container"></div>
+        
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Ask me anything..." 
+                   class="chat-input" autocomplete="off">
+            <button id="send-btn" class="send-button">
+                <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M22 2L11 13" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="button-group">
+            <button id="clear-btn" class="clear-button">Clear Chat</button>
+        </div>
+        
+        <div id="quick-replies" class="quick-replies"></div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #3b82f6;
+        --background-color: #f8fafc;
+        --text-color: #1e293b;
+        --border-color: #e2e8f0;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        overflow: hidden;
+    }
+
+    .chatbot-header {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .chatbot-header h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .chat-box {
+        background: var(--background-color);
+        padding: 1.5rem;
+    }
+
+    .message-container {
+        height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--secondary-color) transparent;
+    }
+
+    .message-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .message-container::-webkit-scrollbar-thumb {
+        background: var(--secondary-color);
+        border-radius: 3px;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .send-button {
+        padding: 0.75rem;
+        border: none;
+        border-radius: 50%;
+        background: var(--secondary-color);
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .send-button:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .send-icon {
+        width: 20px;
+        height: 20px;
+        stroke: white;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+
+    .clear-button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 20px;
+        background: #ef4444;
+        color: white;
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .clear-button:hover {
+        background: #dc2626;
+        transform: scale(1.05);
+    }
+
+    .quick-replies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .quick-reply {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .quick-reply:hover {
+        background: var(--secondary-color);
+        color: white;
+        border-color: var(--secondary-color);
+    }
+
+    .user-message, .bot-message {
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 12px;
+        max-width: 70%;
+        line-height: 1.5;
+        font-size: 0.95rem;
+        word-wrap: break-word;
+    }
+
+    .user-message {
+        background: var(--secondary-color);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+
+    .bot-message {
+        background: #e5e7eb;
+        color: var(--text-color);
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+    }
+
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-color);
+        margin: 0 3px;
+        animation: bounce 1.2s infinite;
+    }
+
+    .dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+    }
+
+    .button-container {
+        margin: 0.5rem 0;
+    }
+
+    .chat-button {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: var(--secondary-color);
+        color: white;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .chat-button:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    @media (max-width: 600px) {
+        .chat-container {
+            margin: 1rem;
+        }
+
+        .message-container {
+            height: 300px;
+        }
+
+        .chat-input {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<script>
+    const chatContainer = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const quickReplies = document.getElementById('quick-replies');
+    
+    function addMessage(text, sender, button = null) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `${sender.toLowerCase()}-message`;
+        let messageContent = text.replace(/\n/g, '<br>');
+        if (sender === 'Bot') {
+            messageContent = `<strong>${sender}:</strong> ${messageContent}`;
+        }
+        if (button) {
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'button-container';
+            const buttonEl = document.createElement('a');
+            buttonEl.className = 'chat-button';
+            buttonEl.href = button.url;
+            buttonEl.textContent = button.label;
+            buttonContainer.appendChild(buttonEl);
+            messageDiv.innerHTML = messageContent;
+            messageDiv.appendChild(buttonContainer);
+        } else {
+            messageDiv.innerHTML = messageContent;
+        }
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    function showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'bot-message typing-indicator';
+        typingDiv.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return typingDiv;
+    }
+    
+    function addQuickReplies(buttons) {
+        quickReplies.innerHTML = '';
+        buttons.forEach(btn => {
+            const button = document.createElement('div');
+            button.className = 'quick-reply';
+            button.textContent = btn.text;
+            button.onclick = () => {
+                userInput.value = btn.value;
+                sendMessage();
+            };
+            quickReplies.appendChild(button);
+        });
+    }
+    
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+    
+        addMessage(message, 'You');
+        userInput.value = '';
+        const typingIndicator = showTyping();
+    
+        try {
+            const response = await fetch('/chatbot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+        
+            chatContainer.removeChild(typingIndicator);
+            const data = await response.json();
+        
+            addMessage(data.response, 'Bot', data.button);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        } catch (error) {
+            chatContainer.removeChild(typingIndicator);
+            addMessage("Sorry, I'm having connection issues. Please try again.", 'Bot');
+            console.error('Error:', error);
+        }
+    }
+    
+    async function clearChat() {
+        chatContainer.innerHTML = '';
+        quickReplies.innerHTML = '';
+        try {
+            await fetch('/clear_chat', { method: 'POST' });
+            addMessage("Chat cleared! How can I assist you today?", 'Bot');
+            addQuickReplies([
+                { text: "Book Flight", value: "I want to book a flight" },
+                { text: "My Trips", value: "Show my bookings" },
+                { text: "Help", value: "What can you do?" }
+            ]);
+        } catch (error) {
+            console.error('Clear error:', error);
+        }
+    }
+    
+    async function loadHistory() {
+        try {
+            const response = await fetch('/get_chat_history');
+            const data = await response.json();
+            
+            if (data.messages.length === 0) {
+                addMessage("Welcome to SkyWings! How may I assist you today?", 'Bot');
+                addQuickReplies([
+                    { text: "Book Flight", value: "I want to book a flight" },
+                    { text: "Flight Status", value: "Check flight status" },
+                    { text: "Help", value: "What can you do?" }
+                ]);
+            } else {
+                data.messages.forEach(([sender, text]) => addMessage(text, sender));
+            }
+        } catch (error) {
+            console.error('Load error:', error);
+        }
+    }
+    
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+     
+    document.getElementById('send-btn').addEventListener('click', sendMessage);
+    document.getElementById('clear-btn').addEventListener('click', clearChat);
+    
+    window.onload = loadHistory;
+</script>
+
+{% endblock %}

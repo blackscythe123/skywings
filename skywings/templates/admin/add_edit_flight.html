@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if flight %}Edit Flight {% else %}Add New Flight{% endif %} - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-{% if flight %}edit{% else %}plus-circle{% endif %} me-2"></i>
+            {% if flight %}Edit Flight {{ flight.flight_number }}{% else %}Add New Flight{% endif %}
+        </h1>
+        <p class="lead">{% if flight %}Update flight details{% else %}Create a new flight route{% endif %}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="flight_number" class="form-label">Flight Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="flight_number" name="flight_number" value="{{ flight.flight_number if flight else '' }}" required pattern="^[A-Z0-9]{2,8}$">
+                            <div class="form-text">Format: 2-8 alphanumeric characters (e.g., BA123, SW540)</div>
+                            <div class="invalid-feedback">
+                                Please provide a valid flight number.
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="origin_id" class="form-label">Origin Airport <span class="text-danger">*</span></label>
+                                <select class="form-select" id="origin_id" name="origin_id" required>
+                                    <option value="">Select origin airport</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport.id }}" {% if flight and flight.origin_id == airport.id %}selected{% endif %}>
+                                        {{ airport.code }} - {{ airport.name }} ({{ airport.city }}, {{ airport.country }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select an origin airport.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="destination_id" class="form-label">Destination Airport <span class="text-danger">*</span></label>
+                                <select class="form-select" id="destination_id" name="destination_id" required>
+                                    <option value="">Select destination airport</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport.id }}" {% if flight and flight.destination_id == airport.id %}selected{% endif %}>
+                                        {{ airport.code }} - {{ airport.name }} ({{ airport.city }}, {{ airport.country }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a destination airport.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="departure_time" class="form-label">Departure Date & Time <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="departure_time" name="departure_time" 
+                                    value="{{ flight.departure_time.strftime('%Y-%m-%dT%H:%M') if flight else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid departure date and time.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="arrival_time" class="form-label">Arrival Date & Time <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="arrival_time" name="arrival_time" 
+                                    value="{{ flight.arrival_time.strftime('%Y-%m-%dT%H:%M') if flight else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid arrival date and time.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="aircraft_id" class="form-label">Aircraft <span class="text-danger">*</span></label>
+                            <select class="form-select" id="aircraft_id" name="aircraft_id" required>
+                                <option value="">Select aircraft</option>
+                                {% for aircraft in aircrafts %}
+                                <option value="{{ aircraft.id }}" {% if flight and flight.aircraft_id == aircraft.id %}selected{% endif %}>
+                                    {{ aircraft.registration }} - {{ aircraft.model }} (Economy: {{ aircraft.economy_seats }}, Business: {{ aircraft.business_seats }}, First: {{ aircraft.first_class_seats }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select an aircraft.
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="economy_base_price" class="form-label">Economy Base Price ($) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="economy_base_price" name="economy_base_price" 
+                                    min="1" step="0.01" value="{{ flight.economy_base_price if flight else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid price.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="business_base_price" class="form-label">Business Base Price ($) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="business_base_price" name="business_base_price" 
+                                    min="1" step="0.01" value="{{ flight.business_base_price if flight else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid price.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="first_class_base_price" class="form-label">First Class Base Price ($) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="first_class_base_price" name="first_class_base_price" 
+                                    min="1" step="0.01" value="{{ flight.first_class_base_price if flight else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid price.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Flight Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="Scheduled" {% if flight and flight.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                                <option value="Postponed" {% if flight and flight.status == 'Postponed' %}selected{% endif %}>Postponed</option>
+                                <option value="Cancelled" {% if flight and flight.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                <option value="Completed" {% if flight and flight.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            {% if flight %}
+                            <a href="{{ url_for('routes.admin_flights') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Update Flight
+                            </button>
+                            {% else %}
+                            <a href="{{ url_for('routes.admin_flights') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i> Create Flight
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Flight Information</h5>
+                    <p class="card-text">
+                        Fill in all required fields marked with <span class="text-danger">*</span> to 
+                        {% if flight %}update the{% else %}create a new{% endif %} flight.
+                    </p>
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i> Important Notes:</h6>
+                        <ul class="mb-0 small">
+                            <li>Make sure destination is different from origin</li>
+                            <li>Arrival time must be after departure time</li>
+                            <li>If you change the aircraft, make sure to check seat configurations</li>
+                            {% if flight %}
+                            <li>Changing price will not affect existing bookings</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% if flight %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Flight Data</h5>
+                    <div class="card-text">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-6">Seats</dt>
+                            <dd class="col-sm-6">{{ flight.seats|length }}</dd>
+                            
+                            <dt class="col-sm-6">Booked Seats</dt>
+                            <dd class="col-sm-6">{{ flight.seats|selectattr('is_booked', 'true')|list|length }}</dd>
+                            
+                            <dt class="col-sm-6">Bookings</dt>
+                            <dd class="col-sm-6">{{ flight.bookings|length }}</dd>
+                            
+                            <dt class="col-sm-6">Created On</dt>
+                            <dd class="col-sm-6">{{ flight.departure_time.strftime('%d %b %Y %H:%M') }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Form validation
+(function () {
+    'use strict';
+    
+    var forms = document.querySelectorAll('.needs-validation');
+    
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+    
+    // Additional validation to ensure origin != destination
+    var form = document.querySelector('form');
+    var originSelect = document.getElementById('origin_id');
+    var destinationSelect = document.getElementById('destination_id');
+    
+    form.addEventListener('submit', function(event) {
+        if (originSelect.value === destinationSelect.value && originSelect.value !== '') {
+            alert('Origin and destination airports cannot be the same.');
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        // Check that arrival is after departure
+        var departureTime = new Date(document.getElementById('departure_time').value);
+        var arrivalTime = new Date(document.getElementById('arrival_time').value);
+        
+        if (arrivalTime <= departureTime) {
+            alert('Arrival time must be after departure time.');
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Airports - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-building me-2"></i> Manage Airports</h1>
+            <p class="lead">View, add, edit, or delete airports</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_add_airport') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Add Airport
+            </a>
+            <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-secondary ms-2">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Sort and Search Controls -->
+    <form method="get" class="row g-3 align-items-end mb-3">
+        <div class="col-md-3">
+            <input type="text" class="form-control" name="search" placeholder="Search by code, city, country" value="{{ request.args.get('search', '') }}">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" name="sort">
+                <option value="code" {% if request.args.get('sort') == 'code' %}selected{% endif %}>Sort by Code</option>
+                <option value="city" {% if request.args.get('sort') == 'city' %}selected{% endif %}>Sort by City</option>
+                <option value="country" {% if request.args.get('sort') == 'country' %}selected{% endif %}>Sort by Country</option>
+                <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Sort by Name</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="order">
+                <option value="asc" {% if request.args.get('order', 'asc') == 'asc' %}selected{% endif %}>Ascending</option>
+                <option value="desc" {% if request.args.get('order') == 'desc' %}selected{% endif %}>Descending</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-info w-100"><i class="fas fa-filter me-2"></i>Apply</button>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('routes.admin_airports') }}" class="btn btn-secondary w-100">Reset</a>
+        </div>
+    </form>
+
+    <!-- Results count -->
+    {% if airports and airports.total > 0 %}
+    <div class="mb-3 text-end text-muted small">
+        Showing {{ ((airports.page-1)*airports.per_page + 1) }}&ndash;{{ ((airports.page-1)*airports.per_page + airports.items|length) }} of {{ airports.total }} results
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>City</th>
+                            <th>Country</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if airports.items %}
+                            {% for airport in airports.items %}
+                            <tr>
+                                <td>{{ airport.code }}</td>
+                                <td>{{ airport.name }}</td>
+                                <td>{{ airport.city }}</td>
+                                <td>{{ airport.country }}</td>
+                                <td>
+                                    <a href="{{ url_for('routes.admin_edit_airport', airport_id=airport.id) }}" class="btn btn-sm btn-primary me-2">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <form action="{{ url_for('routes.admin_delete_airport', airport_id=airport.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ airport.name }}?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No airports found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination Controls -->
+            {% if airports.pages > 1 %}
+            <nav aria-label="Airports pagination" class="mt-3">
+                <ul class="pagination justify-content-center flex-wrap">
+                    {% if airports.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('routes.admin_airports', page=airports.prev_num, search=request.args.get('search', ''), sort=request.args.get('sort', 'code'), order=request.args.get('order', 'asc')) }}">&laquo; Prev</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; Prev</span></li>
+                    {% endif %}
+                    {% for p in range(1, airports.pages + 1) %}
+                    <li class="page-item {% if p == airports.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('routes.admin_airports', page=p, search=request.args.get('search', ''), sort=request.args.get('sort', 'code'), order=request.args.get('order', 'asc')) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if airports.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('routes.admin_airports', page=airports.next_num, search=request.args.get('search', ''), sort=request.args.get('sort', 'code'), order=request.args.get('order', 'asc')) }}">Next &raquo;</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

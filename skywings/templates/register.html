@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-logo">
+            <i class="fas fa-user-plus fa-4x text-info"></i>
+            <h1 class="mt-3">Create Account</h1>
+            <p class="text-muted">Join SkyWings to book flights and earn miles</p>
+        </div>
+        
+        <form action="{{ url_for('routes.register') }}" method="POST">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter your first name" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter your last name" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('password', 'password-toggle-icon')">
+                        <i id="password-toggle-icon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="form-text">Password must be at least 8 characters long</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirm_password', 'confirm-password-toggle-icon')">
+                        <i id="confirm-password-toggle-icon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="terms_agree" required>
+                <label class="form-check-label" for="terms_agree">
+                    I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                </label>
+            </div>
+            
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-info btn-lg">Register</button>
+            </div>
+            
+            <div class="text-center">
+                <p>Already have an account? <a href="{{ url_for('routes.login') }}">Login</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Account Registration</h6>
+                <p>By registering for an account with SkyWings, you agree to provide accurate and complete information about yourself. You are responsible for maintaining the security of your account credentials.</p>
+                
+                <h6>2. Booking and Payment</h6>
+                <p>All bookings are subject to availability and acceptance by SkyWings. Payment must be made in full at the time of booking unless otherwise specified.</p>
+                
+                <h6>3. Privacy Policy</h6>
+                <p>We collect personal information necessary for booking and managing flights. We use your information to process bookings, provide customer service, comply with legal requirements, and improve our services.</p>
+                
+                <h6>4. Frequent Flyer Program</h6>
+                <p>Members of our frequent flyer program earn miles for eligible flights. Miles can be redeemed for flight rewards, upgrades, and other benefits subject to program terms.</p>
+                
+                <h6>5. Communications</h6>
+                <p>By creating an account, you agree to receive communications from SkyWings regarding your account, bookings, and service updates. You can opt out of marketing communications.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Password validation
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        if (password.value.length < 8) {
+            e.preventDefault();
+            alert('Password must be at least 8 characters long');
+            return;
+        }
+        
+        if (password.value !== confirmPassword.value) {
+            e.preventDefault();
+            alert('Passwords do not match');
+            return;
+        }
+    });
+</script>
+{% endblock %}

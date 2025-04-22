@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Bookings for Flight {{ flight.flight_number }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-ticket-alt me-2"></i> Bookings for Flight {{ flight.flight_number }}</h1>
+            <p class="lead">{{ flight.origin_airport.code }} to {{ flight.destination_airport.code }} - {{ flight.departure_time.strftime('%d %b %Y, %H:%M') }}</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_flights') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Flights
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">Flight Bookings</h5>
+            {% if bookings %}
+            <div class="table-responsive mt-3">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Passengers</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td><strong>{{ booking.booking_reference }}</strong></td>
+                            <td>
+                                <div>{{ booking.user.first_name }} {{ booking.user.last_name }}</div>
+                                <small class="text-muted">{{ booking.user.email }}</small>
+                            </td>
+                            <td>
+                                <div>{{ booking.booking_date.strftime('%d %b %Y') }}</div>
+                                <small class="text-muted">{{ booking.booking_date.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>{{ booking.booking_details|length }}</td>
+                            <td>${{ booking.total_price }}</td>
+                            <td>
+                                <span class="badge {% if booking.status == 'Confirmed' %}bg-success{% elif booking.status == 'Reserved' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if booking.payment_status == 'Paid' %}bg-success{% elif booking.payment_status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('routes.admin_booking_details', booking_id=booking.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i> No bookings found for this flight.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

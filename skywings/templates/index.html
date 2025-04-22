@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}SkyWings - Flight Booking System{% endblock %}
+
+{% block extra_head %}
+<!-- Include jQuery and jQuery UI for autocomplete -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="{{ url_for('static', filename='js/flight_search.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+        <div class="hero-content">
+            <h1>YOUR JOURNEY BEGINS WITH <span class="text-info">SKYWINGS</span></h1>
+            <p>Discover the world with our seamless flight booking experience. Find the best deals on flights and manage your bookings with ease.</p>
+            <a href="#search" class="btn btn-book-now">
+                <i class="fas fa-plane me-2"></i> Book Now
+            </a>
+        </div>
+    </div>
+
+<!-- Flight Search Section -->
+<section id="search" class="container">
+    <div class="search-form-container">
+        <h2 class="mb-4 text-center"><i class="fas fa-search me-2"></i> Search Flights</h2>
+        
+        <form id="flight-search-form" action="{{ url_for('routes.search') }}" method="POST">
+            <div class="mb-3">
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="trip-type" id="one-way" value="one-way" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="one-way">One Way</label>
+                    
+                    <input type="radio" class="btn-check" name="trip-type" id="round-trip" value="round-trip" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="round-trip">Round Trip</label>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="origin" class="form-label">From</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-plane-departure"></i></span>
+                        <input type="text" class="form-control" id="origin" name="origin" placeholder="City or airport code" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="destination" class="form-label">To</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-plane-arrival"></i></span>
+                        <input type="text" class="form-control" id="destination" name="destination" placeholder="City or airport code" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="departure-date" class="form-label">Departure Date</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" class="form-control" id="departure-date" name="departure_date" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 return-date-group">
+                    <label for="return-date" class="form-label">Return Date</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" class="form-control" id="return-date" name="return_date">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="travel-class" class="form-label">Travel Class</label>
+                    <select class="form-select" id="travel-class" name="travel_class" required>
+                        <option value="Economy">Economy</option>
+                        <option value="Business">Business</option>
+                        <option value="First Class">First Class</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="passengers" class="form-label">Passengers</label>
+                    <select class="form-select" id="passengers" name="passengers" required>
+                        {% for i in range(1, 10) %}
+                        <option value="{{ i }}">{{ i }} Passenger{% if i > 1 %}s{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="btn btn-info px-5 py-2">Search Flights</button>
+            </div>
+        </form>
+    </div>
+</section>
+<!-- Popular Destinations Section -->
+<section class="container mt-5">
+    <h2>Popular Destinations</h2>
+    <div class="destination-row">
+        {% for destination in popular_destinations %}
+        <div class="destination-card" style="background-image: url('{{ destination.image_url }}');">
+            <div class="overlay"></div>
+            <h3>{{ destination.city }}, {{ destination.country }}</h3>
+            <a href="{{ url_for('routes.search_flights', destination=destination.city) }}" class="btn btn-explore">Explore Flights</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="container mt-5">
+    <h2 class="section-title">Why Choose SkyWings?</h2>
+    <div class="row g-4 mt-3">
+        <div class="col-md-4">
+            <div class="card h-100 bg-light text-dark border">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-ticket-alt fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Easy Booking</h4>
+                    <p class="card-text">Book your flights quickly and easily with our intuitive booking system. Find the best deals in seconds.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 bg-light text-dark border">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-chair fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Seat Selection</h4>
+                    <p class="card-text">Choose your preferred seat with our interactive seat map. Ensure comfort for your journey.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 bg-light text-dark border">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-medal fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Frequent Flyer Rewards</h4>
+                    <p class="card-text">Earn miles with every flight and enjoy exclusive benefits with our frequent flyer program.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="container mt-5">
+    <div class="card bg-primary text-white">
+        <div class="card-body p-4 text-center">
+            <h3 class="mb-3">Ready to take off?</h3>
+            <p class="lead mb-4">Join thousands of satisfied travelers who book with SkyWings.</p>
+            {% if current_user.is_authenticated %}
+            <a href="#search" class="btn btn-light text-primary px-4 py-2">Book Your Flight Now</a>
+            {% else %}
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('routes.register') }}" class="btn btn-light text-primary px-4 py-2">Register Now</a>
+                <a href="{{ url_for('routes.login') }}" class="btn btn-outline-light px-4 py-2">Login</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

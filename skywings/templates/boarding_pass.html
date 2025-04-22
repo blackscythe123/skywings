@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Boarding Pass - {{ booking.booking_reference }} | SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center mb-4">
+        <h2><i class="fas fa-ticket-alt"></i> Boarding Pass</h2>
+        <p class="text-muted">{{ booking.flight.origin_airport.code }} → {{ booking.flight.destination_airport.code }}</p>
+    </div>
+    
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ booking.flight.flight_number }}</h5>
+                <span class="badge bg-light text-dark">{{ booking.status }}</span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <!-- Passenger Column -->
+                <div class="col-md-6 border-end">
+                    <h5 class="border-bottom pb-2">Passenger</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-user me-3 fa-lg"></i>
+                        <div>
+                            <h4 class="mb-0">{{ passenger.passenger_first_name }} {{ passenger.passenger_last_name }}</h4>
+                            <small class="text-muted">Passport: {{ passenger.passenger_passport }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chair me-3 fa-lg"></i>
+                        <div>
+                            <h3 class="mb-0">{{ passenger.seat.seat_number }}</h3>
+                            <small class="text-muted">{{ passenger.seat.seat_class }} Class</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Flight Column -->
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2">Flight Details</h5>
+                    <div class="flight-timeline">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h4 class="mb-0">{{ booking.flight.departure_time.strftime('%H:%M') }}</h4>
+                                <small>{{ booking.flight.departure_time.strftime('%a, %d %b') }}</small>
+                            </div>
+                            <div class="text-center px-3">
+                                <i class="fas fa-plane"></i>
+                                <div class="small text-muted">{{ booking.flight.aircraft.model }}</div>
+                            </div>
+                            <div class="text-end">
+                                <h4 class="mb-0">{{ booking.flight.arrival_time.strftime('%H:%M') }}</h4>
+                                <small>{{ booking.flight.arrival_time.strftime('%a, %d %b') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="mb-0">{{ booking.flight.origin_airport.code }}</h5>
+                                <small class="text-muted">{{ booking.flight.origin_airport.city }}</small>
+                            </div>
+                            <div class="text-center px-3">
+                                <small class="text-muted">
+                                    {% set duration = booking.flight.arrival_time - booking.flight.departure_time %}
+                                    {{ (duration.seconds // 3600) }}h {{ ((duration.seconds % 3600) // 60) }}m
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0">{{ booking.flight.destination_airport.code }}</h5>
+                                <small class="text-muted">{{ booking.flight.destination_airport.city }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Booking Ref: {{ booking.booking_reference }}</small>
+                <small class="text-muted">Issued: {{ booking.booking_date.strftime('%d %b %Y %H:%M') }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print me-2"></i> Print Boarding Pass
+        </button>
+        <a href="{{ url_for('routes.my_bookings') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to My Bookings
+        </a>
+    </div>
+</div>
+
+<style>
+    .flight-timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    .flight-timeline::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #0d6efd;
+        z-index: 1;
+    }
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .card, .card * {
+            visibility: visible;
+        }
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}

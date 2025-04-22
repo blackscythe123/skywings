@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Seats - Flight {{ flight.flight_number }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-chair me-2"></i> Manage Seats - Flight {{ flight.flight_number }}</h1>
+            <p class="lead">{{ flight.origin_airport.code }} to {{ flight.destination_airport.code }} - {{ flight.departure_time.strftime('%d %b %Y, %H:%M') }}</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_flights') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Flights
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% for seat_class, seats in seat_classes.items() %}
+                <h5 class="mt-4">{{ seat_class }} ({{ seats|length }} seats)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Seat Number</th>
+                                <th>Booked</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for seat in seats %}
+                            <tr>
+                                <td>{{ seat.seat_number }}</td>
+                                <td>
+                                    <input type="checkbox" name="seat_{{ seat.id }}" {% if seat.is_booked %}checked{% endif %}>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Update Seats
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

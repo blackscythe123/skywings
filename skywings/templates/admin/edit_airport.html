@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Airport - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-building me-2"></i> Edit Airport</h1>
+            <p class="lead">Update details for {{ airport.code }}</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_airports') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Airports
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label for="code" class="form-label">Airport Code (IATA)</label>
+                    <input type="text" class="form-control" id="code" name="code" value="{{ airport.code }}" maxlength="3" required>
+                    <small class="form-text text-muted">Enter the 3-letter IATA code (e.g., JFK)</small>
+                </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Airport Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ airport.name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="city" name="city" value="{{ airport.city }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="country" class="form-label">Country</label>
+                    <input type="text" class="form-control" id="country" name="country" value="{{ airport.country }}" required>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Update Airport
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

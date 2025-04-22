@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processing Payment - SkyWings</title>
+</head>
+<body>
+    <h1>Processing Payment...</h1>
+    <form>
+        <script
+            src="https://checkout.razorpay.com/v1/checkout.js"
+            data-key="{{ key_id }}"
+            data-amount="{{ amount }}"
+            data-currency="{{ currency }}"
+            data-order_id="{{ order_id }}"
+            data-buttontext="Pay with Razorpay"
+            data-name="{{ name }}"
+            data-description="{{ description }}"
+            data-prefill.name="{{ current_user.first_name }} {{ current_user.last_name }}"
+            data-prefill.email="{{ current_user.email }}"
+            data-theme.color="#0d6efd"
+            data-callback_url="{{ callback_url }}"
+        >
+        </script>
+    </form>
+    <script>
+        // Auto-open the Razorpay checkout form
+        document.getElementsByClassName('razorpay-payment-button')[0].style.display = 'none';
+        document.getElementsByClassName('razorpay-payment-button')[0].click();
+    </script>
+</body>
+</html>

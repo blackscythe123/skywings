@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Flights - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-plane me-2"></i> Flight Management</h1>
+            <p class="lead">Manage flight schedules, routes, and pricing</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_add_flight') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> Add New Flight
+            </a>
+            <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-secondary ms-2">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Filter Flights</h5>
+            <form id="filter-form" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="origin" class="form-label">Origin</label>
+                    <select id="origin" name="origin" class="form-select">
+                        <option value="">All Origins</option>
+                        {% for airport in airports %}
+                        <option value="{{ airport.id }}" {% if request.args.get('origin') == airport.id|string %}selected{% endif %}>
+                            {{ airport.code }} - {{ airport.city }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="destination" class="form-label">Destination</label>
+                    <select id="destination" name="destination" class="form-select">
+                        <option value="">All Destinations</option>
+                        {% for airport in airports %}
+                        <option value="{{ airport.id }}" {% if request.args.get('destination') == airport.id|string %}selected{% endif %}>
+                            {{ airport.code }} - {{ airport.city }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" id="date" name="date" class="form-control" value="{{ request.args.get('date') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Scheduled" {% if request.args.get('status') == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="Postponed" {% if request.args.get('status') == 'Postponed' %}selected{% endif %}>Postponed</option>
+                        <option value="Cancelled" {% if request.args.get('status') == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="Completed" {% if request.args.get('status') == 'Completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('routes.admin_flights') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-redo me-2"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flight Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <!-- Search Input -->
+            <div class="mb-3">
+                <input type="text" id="search-flights" class="form-control" placeholder="Search flights by flight number">
+            </div>
+            {% if flights.total > 0 %}
+            <div class="mb-3 text-end text-muted small">
+                Showing {{ ((flights.page-1)*flights.per_page + 1) }}&ndash;{{ ((flights.page-1)*flights.per_page + flights.items|length) }} of {{ flights.total }} results
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Flight</th>
+                            <th>Route</th>
+                            <th>Schedule</th>
+                            <th>Aircraft</th>
+                            <th>Base Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for flight in flights %}
+                        <tr>
+                            <td>
+                                <strong>{{ flight.flight_number }}</strong>
+                            </td>
+                            <td>
+                                <div>{{ flight.origin_airport.code }} → {{ flight.destination_airport.code }}</div>
+                                <small class="text-muted">{{ flight.origin_airport.city }} to {{ flight.destination_airport.city }}</small>
+                            </td>
+                            <td>
+                                <div>{{ flight.departure_time.strftime('%d %b %Y') }}</div>
+                                <small class="text-muted">
+                                    {{ flight.departure_time.strftime('%H:%M') }} - {{ flight.arrival_time.strftime('%H:%M') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div>{{ flight.aircraft.model }}</div>
+                                <small class="text-muted">{{ flight.aircraft.registration }}</small>
+                            </td>
+                            <td>
+                                <div>Economy: ${{ flight.economy_base_price }}</div>
+                                <small class="text-muted">Business: ${{ flight.business_base_price }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if flight.status == 'Scheduled' %}bg-success{% elif flight.status == 'Postponed' %}bg-warning{% elif flight.status == 'Cancelled' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ flight.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_edit_flight', flight_id=flight.id) }}" class="dropdown-item">
+                                                <i class="fas fa-edit me-2"></i> Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_flight_seats', flight_id=flight.id) }}" class="dropdown-item">
+                                                <i class="fas fa-chair me-2"></i> Manage Seats
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_flight_bookings', flight_id=flight.id) }}" class="dropdown-item">
+                                                <i class="fas fa-ticket-alt me-2"></i> View Bookings
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a href="#" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteFlightModal{{ flight.id }}">
+                                                <i class="fas fa-trash me-2"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteFlightModal{{ flight.id }}" tabindex="-1" aria-labelledby="deleteFlightModalLabel{{ flight.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteFlightModalLabel{{ flight.id }}">Confirm Deletion</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete flight <strong>{{ flight.flight_number }}</strong>?</p>
+                                                <p class="text-danger">This action cannot be undone and will also delete all related bookings and seats.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('routes.admin_delete_flight', flight_id=flight.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">Delete Flight</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    <li class="page-item {% if not prev_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1" aria-disabled="{{ 'true' if not prev_url else 'false' }}">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+                    <li class="page-item {% if not next_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ next_url or '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No flights found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Quick search functionality
+    document.getElementById('search-flights').addEventListener('keyup', function() {
+        const searchValue = this.value.toLowerCase();
+        const tableRows = document.querySelectorAll('tbody tr');
+        
+        tableRows.forEach(row => {
+            const flightNumber = row.querySelector('td:first-child').textContent.toLowerCase();
+            if (flightNumber.includes(searchValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

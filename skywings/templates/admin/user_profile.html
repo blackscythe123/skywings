@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}User Profile - {{ user.username }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>User Profile: {{ user.first_name }} {{ user.last_name }} (@{{ user.username }})</h2>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">User Details</h5>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Date Joined:</strong> {{ user.date_joined.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            <p><strong>Frequent Flyer Status:</strong> {{ user.frequent_flyer_status }}</p>
+            <p><strong>Frequent Flyer Miles:</strong> {{ user.frequent_flyer_miles }}</p>
+            <p><strong>Phone Number:</strong> {{ user.phone_number or 'Not provided' }}</p>
+            <p><strong>Address:</strong> {{ user.address or 'Not provided' }}</p>
+            <p><strong>Passport Number:</strong> {{ user.passport_number or 'Not provided' }}</p>
+            <p><strong>Nationality:</strong> {{ user.nationality or 'Not provided' }}</p>
+            <p><strong>Admin:</strong> {{ 'Yes' if user.is_admin else 'No' }}</p>
+        </div>
+    </div>
+
+    <h3>Booking History</h3>
+    {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Booking Reference</th>
+                        <th>Flight</th>
+                        <th>Booking Date</th>
+                        <th>Status</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.booking_reference }}</td>
+                        <td>{{ booking.flight.flight_number }} ({{ booking.flight.origin_airport.code }} → {{ booking.flight.destination_airport.code }})</td>
+                        <td>{{ booking.booking_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ booking.status }}</td>
+                        <td>${{ booking.total_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No bookings found for this user.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ error_code }} Error - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="error-container">
+        <div class="error-code">{{ error_code }}</div>
+        <div class="error-message">{{ error_message }}</div>
+        <p class="text-muted mb-4">Sorry, something went wrong. Please try again later.</p>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card bg-dark mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">What might have happened?</h5>
+                        <ul class="mb-0">
+                            {% if error_code == 404 %}
+                            <li>The page you are looking for might have been removed or renamed</li>
+                            <li>You might have typed the address incorrectly</li>
+                            <li>The link you clicked might be outdated</li>
+                            {% elif error_code == 500 %}
+                            <li>There was a problem processing your request</li>
+                            <li>Our servers might be experiencing technical difficulties</li>
+                            <li>The system might be undergoing maintenance</li>
+                            {% else %}
+                            <li>An unexpected error occurred</li>
+                            <li>The server might be temporarily unavailable</li>
+                            <li>There might be a network issue</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('routes.index') }}" class="btn btn-info">
+                <i class="fas fa-home me-2"></i> Go to Homepage
+            </a>
+            <button onclick="window.history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Go Back
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

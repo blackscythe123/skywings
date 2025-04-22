@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-ticket-alt me-2"></i> Booking Management</h1>
+            <p class="lead">View and manage all customer bookings</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Filter Bookings</h5>
+            <form id="filter-form" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="flight" class="form-label">Flight Number</label>
+                    <input type="text" id="flight" name="flight" class="form-control" value="{{ request.args.get('flight') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Booking Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Reserved" {% if request.args.get('status') == 'Reserved' %}selected{% endif %}>Reserved</option>
+                        <option value="Confirmed" {% if request.args.get('status') == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                        <option value="Cancelled" {% if request.args.get('status') == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="payment" class="form-label">Payment Status</label>
+                    <select id="payment" name="payment" class="form-select">
+                        <option value="">All Payment Statuses</option>
+                        <option value="Pending" {% if request.args.get('payment') == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Paid" {% if request.args.get('payment') == 'Paid' %}selected{% endif %}>Paid</option>
+                        <option value="Refunded" {% if request.args.get('payment') == 'Refunded' %}selected{% endif %}>Refunded</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Booking Date</label>
+                    <input type="date" id="date" name="date" class="form-control" value="{{ request.args.get('date') }}">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('routes.admin_bookings') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-redo me-2"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title">All Bookings</h5>
+                <div class="d-flex">
+                    <div class="input-group">
+                        <input type="text" id="search-bookings" class="form-control" placeholder="Search by reference or passenger name">
+                        <button class="btn btn-primary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Flight</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Passengers</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>
+                                <strong>{{ booking.booking_reference }}</strong>
+                            </td>
+                            <td>
+                                <div>{{ booking.flight.flight_number }}</div>
+                                <small class="text-muted">
+                                    {{ booking.flight.origin_airport.code }} → {{ booking.flight.destination_airport.code }}
+                                </small>
+                            </td>
+                            <td>
+                                <div>{{ booking.user.first_name }} {{ booking.user.last_name }}</div>
+                                <small class="text-muted">{{ booking.user.email }}</small>
+                            </td>
+                            <td>
+                                <div>{{ booking.booking_date.strftime('%d %b %Y') }}</div>
+                                <small class="text-muted">{{ booking.booking_date.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>{{ booking.booking_details|length }}</td>
+                            <td>${{ booking.total_price }}</td>
+                            <td>
+                                <span class="badge {% if booking.status == 'Confirmed' %}bg-success{% elif booking.status == 'Reserved' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if booking.payment_status == 'Paid' %}bg-success{% elif booking.payment_status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                        <li>
+                                            <a href="{{ url_for('routes.admin_booking_details', booking_id=booking.id) }}" class="dropdown-item">
+                                                <i class="fas fa-eye me-2"></i> View Details
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#updateStatusModal{{ booking.id }}">
+                                                <i class="fas fa-edit me-2"></i> Update Status
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#updatePaymentModal{{ booking.id }}">
+                                                <i class="fas fa-money-bill me-2"></i> Update Payment
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a href="#" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#cancelBookingModal{{ booking.id }}">
+                                                <i class="fas fa-ban me-2"></i> Cancel Booking
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Update Status Modal -->
+                                <div class="modal fade" id="updateStatusModal{{ booking.id }}" tabindex="-1" aria-labelledby="updateStatusModalLabel{{ booking.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="updateStatusModalLabel{{ booking.id }}">Update Booking Status</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ url_for('routes.admin_update_booking_status', booking_id=booking.id) }}" method="post">
+                                                    <div class="mb-3">
+                                                        <label for="booking_status{{ booking.id }}" class="form-label">Booking Status</label>
+                                                        <select class="form-select" id="booking_status{{ booking.id }}" name="booking_status">
+                                                            <option value="Reserved" {% if booking.status == 'Reserved' %}selected{% endif %}>Reserved</option>
+                                                            <option value="Confirmed" {% if booking.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                                                            <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="d-flex justify-content-end">
+                                                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Update Status</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Update Payment Modal -->
+                                <div class="modal fade" id="updatePaymentModal{{ booking.id }}" tabindex="-1" aria-labelledby="updatePaymentModalLabel{{ booking.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="updatePaymentModalLabel{{ booking.id }}">Update Payment Status</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ url_for('routes.admin_update_payment_status', booking_id=booking.id) }}" method="post">
+                                                    <div class="mb-3">
+                                                        <label for="payment_status{{ booking.id }}" class="form-label">Payment Status</label>
+                                                        <select class="form-select" id="payment_status{{ booking.id }}" name="payment_status">
+                                                            <option value="Pending" {% if booking.payment_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                                            <option value="Paid" {% if booking.payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                                                            <option value="Refunded" {% if booking.payment_status == 'Refunded' %}selected{% endif %}>Refunded</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="d-flex justify-content-end">
+                                                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Update Payment</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cancel Booking Modal -->
+                                <div class="modal fade" id="cancelBookingModal{{ booking.id }}" tabindex="-1" aria-labelledby="cancelBookingModalLabel{{ booking.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="cancelBookingModalLabel{{ booking.id }}">Cancel Booking</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to cancel booking <strong>{{ booking.booking_reference }}</strong>?</p>
+                                                <p class="text-danger">This will mark the booking as cancelled and release all reserved seats.</p>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="" id="refundCheck{{ booking.id }}">
+                                                    <label class="form-check-label" for="refundCheck{{ booking.id }}">
+                                                        Process refund for this booking (if applicable)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <form action="{{ url_for('routes.admin_cancel_booking', booking_id=booking.id) }}" method="post">
+                                                    <button type="submit" class="btn btn-danger">Cancel Booking</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    <li class="page-item {% if not prev_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1" aria-disabled="{{ 'true' if not prev_url else 'false' }}">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+                    <li class="page-item {% if not next_url %}disabled{% endif %}">
+                        <a class="page-link" href="{{ next_url or '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No bookings found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Quick search functionality
+    document.getElementById('search-bookings').addEventListener('keyup', function() {
+        const searchValue = this.value.toLowerCase();
+        const tableRows = document.querySelectorAll('tbody tr');
+        
+        tableRows.forEach(row => {
+            const reference = row.querySelector('td:first-child').textContent.toLowerCase();
+            const customer = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            if (reference.includes(searchValue) || customer.includes(searchValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

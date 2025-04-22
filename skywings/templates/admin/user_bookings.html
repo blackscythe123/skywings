@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Bookings for {{ user.first_name }} {{ user.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-ticket-alt me-2"></i> Bookings for {{ user.first_name }} {{ user.last_name }}</h1>
+            <p class="lead">View all bookings for @{{ user.username }}</p>
+        </div>
+        <a href="{{ url_for('routes.admin_users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Users
+        </a>
+    </div>
+
+    <!-- Sorting Controls -->
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label for="sort" class="form-label">Sort By</label>
+            <select id="sort" name="sort" class="form-select" onchange="this.form.submit()">
+                <option value="date-desc" {% if sort == 'date-desc' %}selected{% endif %}>Date (Newest First)</option>
+                <option value="date-asc" {% if sort == 'date-asc' %}selected{% endif %}>Date (Oldest First)</option>
+                <option value="status" {% if sort == 'status' %}selected{% endif %}>Status</option>
+                <option value="payment" {% if sort == 'payment' %}selected{% endif %}>Payment Status</option>
+                <option value="price-desc" {% if sort == 'price-desc' %}selected{% endif %}>Price (High to Low)</option>
+                <option value="price-asc" {% if sort == 'price-asc' %}selected{% endif %}>Price (Low to High)</option>
+            </select>
+        </div>
+    </form>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if bookings.total > 0 %}
+            <div class="mb-3 text-end text-muted small">
+                Showing {{ ((bookings.page-1)*bookings.per_page + 1) }}–{{ ((bookings.page-1)*bookings.per_page + bookings.items|length) }} of {{ bookings.total }} results
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Flight</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings.items %}
+                        <tr>
+                            <td>{{ booking.booking_reference }}</td>
+                            <td>{{ booking.flight.flight_number }}</td>
+                            <td>{{ booking.flight.departure_time.strftime('%d %b %Y %H:%M') }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if booking.status == 'Confirmed' %}bg-success
+                                    {% elif booking.status == 'Cancelled' %}bg-danger
+                                    {% elif booking.status == 'Reserved' %}bg-warning text-dark
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if booking.payment_status == 'Paid' or booking.payment_status == 'Completed' %}bg-success
+                                    {% elif booking.payment_status == 'Pending' %}bg-warning text-dark
+                                    {% elif booking.payment_status == 'Refunded' %}bg-info text-dark
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </td>
+                            <td>${{ "%.2f"|format(booking.total_price) }}</td>
+                            <td>
+                                <a href="{{ url_for('routes.admin_booking_details', booking_id=booking.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    <li class="page-item {% if not bookings.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('routes.admin_user_bookings', user_id=user.id, page=bookings.prev_num, sort=sort) if bookings.has_prev else '#' }}" tabindex="-1" aria-disabled="{{ 'true' if not bookings.has_prev else 'false' }}">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">{{ bookings.page }}</a></li>
+                    <li class="page-item {% if not bookings.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('routes.admin_user_bookings', user_id=user.id, page=bookings.next_num, sort=sort) if bookings.has_next else '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No bookings found for this user.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

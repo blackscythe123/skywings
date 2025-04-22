@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - SkyWings{% endblock %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='js/flight_search.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-search me-2"></i> Flight Search Results</h1>
+        <p class="lead">
+            {{ origin_airport.city }} ({{ origin_airport.code }}) to {{ destination_airport.city }} ({{ destination_airport.code }})
+            {% if is_round_trip %}
+            | Round Trip | {{ departure_date.strftime('%d %b %Y') }} - {{ return_date.strftime('%d %b %Y') }}
+            {% else %}
+            | One Way | {{ departure_date.strftime('%d %b %Y') }}
+            {% endif %}
+            | {{ passengers }} Passenger{% if passengers > 1 %}s{% endif %} | {{ travel_class }}
+        </p>
+    </div>
+
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="card bg-dark sticky-top" style="top: 20px; z-index: 1">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> Filters</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Price Range Filter -->
+                    <div class="mb-4">
+                        <h6>Price Range</h6>
+                        <div id="price-range" data-min="0" data-max="2000"></div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span id="price-min">$0</span>
+                            <span id="price-max">$2000</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Time of Day Filter -->
+                    <div class="mb-4">
+                        <h6>Departure Time</h6>
+                        <div class="form-check">
+                            <input class="form-check-input time-filter" type="checkbox" value="morning" id="morning">
+                            <label class="form-check-label" for="morning">
+                                Morning (5:00 AM - 11:59 AM)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input time-filter" type="checkbox" value="afternoon" id="afternoon">
+                            <label class="form-check-label" for="afternoon">
+                                Afternoon (12:00 PM - 5:59 PM)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input time-filter" type="checkbox" value="evening" id="evening">
+                            <label class="form-check-label" for="evening">
+                                Evening (6:00 PM - 9:59 PM)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input time-filter" type="checkbox" value="night" id="night">
+                            <label class="form-check-label" for="night">
+                                Night (10:00 PM - 4:59 AM)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Airlines Filter (dynamically generated) -->
+                    <div class="mb-4">
+                        <h6>Airlines</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="all" id="all-airlines" checked>
+                            <label class="form-check-label" for="all-airlines">
+                                All Airlines
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p id="filter-summary" class="mb-0 text-muted">
+                            Showing all flights
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Flight Results -->
+        <div class="col-lg-9">
+            <!-- Departure Flights -->
+            <div class="flight-results mb-4" data-flight-type="departure">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>
+                        {% if is_round_trip %}
+                        Departure: {{ origin_airport.city }} to {{ destination_airport.city }}
+                        {% else %}
+                        {{ origin_airport.city }} to {{ destination_airport.city }}
+                        {% endif %}
+                    </h3>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Sort: Recommended
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item sort-option active" data-sort="price-asc" href="#">Price: Low to High</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="price-desc" href="#">Price: High to Low</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="duration-asc" href="#">Duration: Shortest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="departure-asc" href="#">Departure: Earliest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="departure-desc" href="#">Departure: Latest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="arrival-asc" href="#">Arrival: Earliest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="arrival-desc" href="#">Arrival: Latest</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="flights-container">
+                    {% if departure_flights %}
+                        {% for flight_data in departure_flights %}
+                        <div class="card flight-card" 
+                             data-price="{{ flight_data.price_per_person }}"
+                             data-duration="{{ flight_data.duration_hours * 60 + flight_data.duration_minutes }}"
+                             data-departure="{{ flight_data.flight.departure_time }}"
+                             data-arrival="{{ flight_data.flight.arrival_time }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="flight-logo">
+                                        <i class="fas fa-plane"></i>
+                                    </div>
+                                    <span class="fs-5 fw-bold">{{ flight_data.flight.flight_number }}</span>
+                                    <span class="badge bg-info">{{ flight_data.available_seats }} seats available</span>
+                                </div>
+                                
+                                <div class="d-md-flex justify-content-between align-items-center mb-3">
+                                    <div class="flight-info d-flex align-items-center mb-3 mb-md-0">
+                                        <div class="text-center">
+                                            <div class="flight-time">{{ flight_data.flight.departure_time.strftime('%H:%M') }}</div>
+                                            <div class="text-muted">{{ flight_data.flight.departure_time.strftime('%d %b') }}</div>
+                                            <div class="airport-code">{{ flight_data.flight.origin_airport.code }}</div>
+                                        </div>
+                                        
+                                        <div class="flight-path mx-3">
+                                            <i class="fas fa-plane"></i>
+                                        </div>
+                                        
+                                        <div class="text-center">
+                                            <div class="flight-time">{{ flight_data.flight.arrival_time.strftime('%H:%M') }}</div>
+                                            <div class="text-muted">{{ flight_data.flight.arrival_time.strftime('%d %b') }}</div>
+                                            <div class="airport-code">{{ flight_data.flight.destination_airport.code }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex flex-column align-items-end">
+                                        <div class="text-muted">{{ flight_data.duration_hours }}h {{ flight_data.duration_minutes }}m</div>
+                                        <div class="fs-4 fw-bold text-info">${{ flight_data.price_per_person }}</div>
+                                        <div class="text-muted">per person</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-link flight-details-btn p-0">
+                                        Show Details <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    
+                                    <a href="{{ url_for('routes.seat_selection', flight_id=flight_data.flight.id, travel_class=travel_class, passengers=passengers) }}" class="btn btn-info select-flight-btn">
+                                        Select <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="flight-details mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="mb-3">Flight Details</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Flight:</strong> {{ flight_data.flight.flight_number }}</li>
+                                                <li><strong>Aircraft:</strong> {{ flight_data.flight.aircraft.model }}</li>
+                                                <li><strong>Class:</strong> {{ travel_class }}</li>
+                                                <li><strong>Total Flight Time:</strong> {{ flight_data.duration_hours }}h {{ flight_data.duration_minutes }}m</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="mb-3">Price Breakdown</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Base Fare:</strong> ${{ flight_data.price_per_person }}</li>
+                                                <li><strong>Taxes & Fees:</strong> Included</li>
+                                                <li><strong>Price per Person:</strong> ${{ flight_data.price_per_person }}</li>
+                                                <li><strong>Total ({{ passengers }} Passenger{% if passengers > 1 %}s{% endif %}):</strong> ${{ flight_data.total_price }}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No flights found for the selected criteria. Please try different dates or airports.
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div id="no-results" class="alert alert-warning mt-3" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> No flights match your filter criteria. Please adjust your filters.
+                </div>
+            </div>
+            
+            <!-- Return Flights (if round trip) -->
+            {% if is_round_trip %}
+            <div class="flight-results" data-flight-type="return">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Return: {{ destination_airport.city }} to {{ origin_airport.city }}</h3>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="returnSortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Sort: Recommended
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="returnSortDropdown">
+                            <li><a class="dropdown-item sort-option active" data-sort="price-asc" href="#">Price: Low to High</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="price-desc" href="#">Price: High to Low</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="duration-asc" href="#">Duration: Shortest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="departure-asc" href="#">Departure: Earliest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="departure-desc" href="#">Departure: Latest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="arrival-asc" href="#">Arrival: Earliest</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="arrival-desc" href="#">Arrival: Latest</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="flights-container">
+                    {% if return_flights %}
+                        {% for flight_data in return_flights %}
+                        <div class="card flight-card" 
+                             data-price="{{ flight_data.price_per_person }}"
+                             data-duration="{{ flight_data.duration_hours * 60 + flight_data.duration_minutes }}"
+                             data-departure="{{ flight_data.flight.departure_time }}"
+                             data-arrival="{{ flight_data.flight.arrival_time }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="flight-logo">
+                                        <i class="fas fa-plane"></i>
+                                    </div>
+                                    <span class="fs-5 fw-bold">{{ flight_data.flight.flight_number }}</span>
+                                    <span class="badge bg-info">{{ flight_data.available_seats }} seats available</span>
+                                </div>
+                                
+                                <div class="d-md-flex justify-content-between align-items-center mb-3">
+                                    <div class="flight-info d-flex align-items-center mb-3 mb-md-0">
+                                        <div class="text-center">
+                                            <div class="flight-time">{{ flight_data.flight.departure_time.strftime('%H:%M') }}</div>
+                                            <div class="text-muted">{{ flight_data.flight.departure_time.strftime('%d %b') }}</div>
+                                            <div class="airport-code">{{ flight_data.flight.origin_airport.code }}</div>
+                                        </div>
+                                        
+                                        <div class="flight-path mx-3">
+                                            <i class="fas fa-plane"></i>
+                                        </div>
+                                        
+                                        <div class="text-center">
+                                            <div class="flight-time">{{ flight_data.flight.arrival_time.strftime('%H:%M') }}</div>
+                                            <div class="text-muted">{{ flight_data.flight.arrival_time.strftime('%d %b') }}</div>
+                                            <div class="airport-code">{{ flight_data.flight.destination_airport.code }}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex flex-column align-items-end">
+                                        <div class="text-muted">{{ flight_data.duration_hours }}h {{ flight_data.duration_minutes }}m</div>
+                                        <div class="fs-4 fw-bold text-info">${{ flight_data.price_per_person }}</div>
+                                        <div class="text-muted">per person</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-link flight-details-btn p-0">
+                                        Show Details <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    
+                                    <a href="{{ url_for('routes.seat_selection', flight_id=flight_data.flight.id, travel_class=travel_class, passengers=passengers) }}" class="btn btn-info select-flight-btn">
+                                        Select <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="flight-details mt-3">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="mb-3">Flight Details</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Flight:</strong> {{ flight_data.flight.flight_number }}</li>
+                                                <li><strong>Aircraft:</strong> {{ flight_data.flight.aircraft.model }}</li>
+                                                <li><strong>Class:</strong> {{ travel_class }}</li>
+                                                <li><strong>Total Flight Time:</strong> {{ flight_data.duration_hours }}h {{ flight_data.duration_minutes }}m</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="mb-3">Price Breakdown</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Base Fare:</strong> ${{ flight_data.price_per_person }}</li>
+                                                <li><strong>Taxes & Fees:</strong> Included</li>
+                                                <li><strong>Price per Person:</strong> ${{ flight_data.price_per_person }}</li>
+                                                <li><strong>Total ({{ passengers }} Passenger{% if passengers > 1 %}s{% endif %}):</strong> ${{ flight_data.total_price }}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No return flights found for the selected criteria. Please try different dates.
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div id="no-return-results" class="alert alert-warning mt-3" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> No return flights match your filter criteria. Please adjust your filters.
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Search Again Button -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.index') }}#search" class="btn btn-secondary">
+                    <i class="fas fa-search me-2"></i> Search Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Polyfill for noUiSlider (simplified version for demo)
+    // In a real app, you'd include the actual noUiSlider library
+    if (typeof noUiSlider === 'undefined') {
+        window.noUiSlider = {
+            create: function(element, options) {
+                element.noUiSlider = {
+                    on: function(eventName, callback) {
+                        // Call the callback with initial values
+                        callback([options.start[0], options.start[1]], 0);
+                    }
+                };
+            }
+        };
+    }
+    
+    // Call filterFlightsByPrice with initial values
+    document.addEventListener('DOMContentLoaded', function() {
+        const priceSlider = document.getElementById('price-range');
+        if (priceSlider) {
+            const minPrice = parseInt(priceSlider.getAttribute('data-min'));
+            const maxPrice = parseInt(priceSlider.getAttribute('data-max'));
+            filterFlightsByPrice(minPrice, maxPrice);
+        }
+    });
+</script>
+{% endblock %}

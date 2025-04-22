@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation - SkyWings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .booking-ref {
+            font-size: 18px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .flight-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .flight-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        .passenger-list h4,
+        .payment-info h4 {
+            margin-bottom: 10px;
+            color: #0d6efd;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            text-align: center;
+            color: #555;
+        }
+    </style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate QR code
+        const qrData = "http://10.106.221.195:5500/boarding-pass?ref={{ bookings[0].booking_reference }}";
+        new QRCode(document.getElementById('qr-code-container'), {
+            text: qrData,
+            width: 150,
+            height: 150
+        });
+    });
+</script>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">SkyWings Airlines</div>
+            <div class="booking-ref">Booking Reference: {{ bookings[0].booking_reference }}</div>
+            <div>Confirmation Date: {{ bookings[0].booking_date.strftime('%d %b %Y') }}</div>
+        </div>
+        
+        {% for booking in bookings %}
+        <div class="flight-box">
+            <div class="flight-header">
+                <h3>{{ 'Departure' if loop.first else 'Return' }} Flight</h3>
+                <div>Status: {{ booking.status }}</div>
+            </div>
+            
+            <div class="flight-info">
+                <div>
+                    <strong>{{ booking.flight.origin_airport.code }}</strong><br>
+                    {{ booking.flight.departure_time.strftime('%d %b %Y %H:%M') }}
+                </div>
+                <div>→</div>
+                <div>
+                    <strong>{{ booking.flight.destination_airport.code }}</strong><br>
+                    {{ booking.flight.arrival_time.strftime('%d %b %Y %H:%M') }}
+                </div>
+                <div>
+                    Flight: {{ booking.flight.flight_number }}<br>
+                    Duration: {{ (booking.flight.arrival_time - booking.flight.departure_time).seconds // 3600 }}h {{ ((booking.flight.arrival_time - booking.flight.departure_time).seconds % 3600) // 60 }}m
+                </div>
+            </div>
+            
+            <div class="passenger-list">
+                <h4>Passengers</h4>
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Seat</th>
+                        <th>Class</th>
+                        <th>Passport</th>
+                    </tr>
+                    {% for detail in booking.booking_details %}
+                    <tr>
+                        <td>{{ detail.passenger_first_name }} {{ detail.passenger_last_name }}</td>
+                        <td>{{ detail.seat.seat_number }}</td>
+                        <td>{{ detail.seat.seat_class }}</td>
+                        <td>{{ detail.passenger_passport }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            
+            <div class="payment-info">
+                <h4>Payment Information</h4>
+                <p><strong>Total Paid:</strong> ${{ booking.total_price }}</p>
+                <p><strong>Payment Method:</strong> Stripe</p>
+                <p><strong>Payment Status:</strong> {{ booking.payment_status }}</p>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="qr-section">
+            <h3>Boarding Pass QR Code</h3>
+            <div id="qr-code-container"></div>
+            <div class="qr-text">
+                Scan this code at the airport for quick check-in<br>
+                Reference: {{ bookings[0].booking_reference }}
+            </div>
+        </div>
+        <div class="footer">
+            <p>Thank you for choosing SkyWings Airlines</p>
+            <p>For inquiries, contact <strong>support@skywings.com</strong> or call <strong>+1 (800) 555-1234</strong></p>
+        </div>
+    </div>
+</body>
+</html>

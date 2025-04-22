@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Details - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-md-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-ticket-alt me-2"></i> Booking Details</h1>
+            <p class="lead">Reference: {{ booking.booking_reference }}</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('routes.admin_bookings') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Bookings
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Booking Summary -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Booking Summary</h5>
+                    <div class="card-text">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Status</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge {% if booking.status == 'Confirmed' %}bg-success{% elif booking.status == 'Reserved' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </dd>
+                            
+                            <dt class="col-sm-5">Payment</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge {% if booking.payment_status == 'Paid' %}bg-success{% elif booking.payment_status == 'Pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ booking.payment_status }}
+                                </span>
+                            </dd>
+                            
+                            <dt class="col-sm-5">Booking Date</dt>
+                            <dd class="col-sm-7">{{ booking.booking_date.strftime('%d %b %Y, %H:%M') }}</dd>
+                            
+                            <dt class="col-sm-5">Total Price</dt>
+                            <dd class="col-sm-7">${{ booking.total_price }}</dd>
+                            
+                            <dt class="col-sm-5">Passengers</dt>
+                            <dd class="col-sm-7">{{ booking.booking_details|length }}</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4">
+                        <h6>Actions</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                                <i class="fas fa-edit me-1"></i> Update Status
+                            </button>
+                            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#updatePaymentModal">
+                                <i class="fas fa-money-bill me-1"></i> Update Payment
+                            </button>
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelBookingModal">
+                                <i class="fas fa-ban me-1"></i> Cancel Booking
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Update Status Modal -->
+                    <div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="updateStatusModalLabel">Update Booking Status</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ url_for('routes.admin_update_booking_status', booking_id=booking.id) }}" method="post">
+                                        <div class="mb-3">
+                                            <label for="booking_status" class="form-label">Booking Status</label>
+                                            <select class="form-select" id="booking_status" name="booking_status">
+                                                <option value="Reserved" {% if booking.status == 'Reserved' %}selected{% endif %}>Reserved</option>
+                                                <option value="Confirmed" {% if booking.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                                                <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Update Status</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Update Payment Modal -->
+                    <div class="modal fade" id="updatePaymentModal" tabindex="-1" aria-labelledby="updatePaymentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="updatePaymentModalLabel">Update Payment Status</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ url_for('routes.admin_update_payment_status', booking_id=booking.id) }}" method="post">
+                                        <div class="mb-3">
+                                            <label for="payment_status" class="form-label">Payment Status</label>
+                                            <select class="form-select" id="payment_status" name="payment_status">
+                                                <option value="Pending" {% if booking.payment_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                                <option value="Paid" {% if booking.payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                                                <option value="Refunded" {% if booking.payment_status == 'Refunded' %}selected{% endif %}>Refunded</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Update Payment</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Booking Modal -->
+                    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-labelledby="cancelBookingModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="cancelBookingModalLabel">Cancel Booking</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to cancel booking <strong>{{ booking.booking_reference }}</strong>?</p>
+                                    <p class="text-danger">This will mark the booking as cancelled and release all reserved seats.</p>
+                                    <form action="{{ url_for('routes.admin_cancel_booking', booking_id=booking.id) }}" method="post">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" value="true" id="process_refund" name="process_refund">
+                                            <label class="form-check-label" for="process_refund">
+                                                Process refund for this booking
+                                            </label>
+                                        </div>
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-danger">Cancel Booking</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Customer Information</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-container bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            {{ booking.user.first_name[0] }}{{ booking.user.last_name[0] }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ booking.user.first_name }} {{ booking.user.last_name }}</h6>
+                            <p class="text-muted mb-0">{{ booking.user.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card-text">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">User ID</dt>
+                            <dd class="col-sm-7">{{ booking.user.id }}</dd>
+                            
+                            <dt class="col-sm-5">Username</dt>
+                            <dd class="col-sm-7">{{ booking.user.username }}</dd>
+                            
+                            <dt class="col-sm-5">Phone</dt>
+                            <dd class="col-sm-7">{{ booking.user.phone_number or 'Not provided' }}</dd>
+                            
+                            <dt class="col-sm-5">FF Status</dt>
+                            <dd class="col-sm-7">
+                                <span class="badge {% if booking.user.frequent_flyer_status == 'Standard' %}bg-secondary{% elif booking.user.frequent_flyer_status == 'Silver' %}bg-light text-dark border{% elif booking.user.frequent_flyer_status == 'Gold' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                    {{ booking.user.frequent_flyer_status }}
+                                </span>
+                            </dd>
+                            
+                            <dt class="col-sm-5">FF Miles</dt>
+                            <dd class="col-sm-7">{{ booking.user.frequent_flyer_miles }}</dd>
+                            
+                            <dt class="col-sm-5">Join Date</dt>
+                            <dd class="col-sm-7">{{ booking.user.date_joined.strftime('%d %b %Y') }}</dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('routes.admin_user_bookings', user_id=booking.user.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-history me-1"></i> View Customer Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flight Details -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Flight Information</h5>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <h6 class="mb-0 me-2">{{ booking.flight.flight_number }}</h6>
+                            <span class="badge {% if booking.flight.status == 'Scheduled' %}bg-success{% elif booking.flight.status == 'Postponed' %}bg-warning{% elif booking.flight.status == 'Cancelled' %}bg-danger{% else %}bg-info{% endif %}">
+                                {{ booking.flight.status }}
+                            </span>
+                        </div>
+                        <p class="text-muted mb-0">{{ booking.flight.origin_airport.code }} to {{ booking.flight.destination_airport.code }}</p>
+                    </div>
+                    
+                    <div class="card-text">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">From</dt>
+                            <dd class="col-sm-7">{{ booking.flight.origin_airport.city }}, {{ booking.flight.origin_airport.country }}</dd>
+                            
+                            <dt class="col-sm-5">To</dt>
+                            <dd class="col-sm-7">{{ booking.flight.destination_airport.city }}, {{ booking.flight.destination_airport.country }}</dd>
+                            
+                            <dt class="col-sm-5">Departure</dt>
+                            <dd class="col-sm-7">{{ booking.flight.departure_time.strftime('%d %b %Y, %H:%M') }}</dd>
+                            
+                            <dt class="col-sm-5">Arrival</dt>
+                            <dd class="col-sm-7">{{ booking.flight.arrival_time.strftime('%d %b %Y, %H:%M') }}</dd>
+                            
+                            <dt class="col-sm-5">Aircraft</dt>
+                            <dd class="col-sm-7">{{ booking.flight.aircraft.model }}</dd>
+                            
+                            <dt class="col-sm-5">Registration</dt>
+                            <dd class="col-sm-7">{{ booking.flight.aircraft.registration }}</dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('routes.admin_edit_flight', flight_id=booking.flight.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> Edit Flight
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Passenger Details -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Passenger Details</h5>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Passport</th>
+                                    <th>Nationality</th>
+                                    <th>Date of Birth</th>
+                                    <th>Seat</th>
+                                    <th>Class</th>
+                                    <th>Price</th>
+                                    <th>Special Requests</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in booking.booking_details %}
+                                <tr>
+                                    <td>{{ detail.passenger_first_name }} {{ detail.passenger_last_name }}</td>
+                                    <td>{{ detail.passenger_passport }}</td>
+                                    <td>{{ detail.passenger_nationality }}</td>
+                                    <td>{{ detail.passenger_dob.strftime('%d %b %Y') }}</td>
+                                    <td>{{ detail.seat.seat_number }}</td>
+                                    <td>{{ detail.seat.seat_class }}</td>
+                                    <td>${{ detail.price }}</td>
+                                    <td>{{ detail.special_requests or 'None' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Information -->
+        {% if booking.payment %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Payment Information</h5>
+                    <div class="row mt-3">
+                        {% for payment in booking.payment %}
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="mb-0">Payment #{{ payment.id }}</h6>
+                                    <span class="badge {% if payment.status == 'Completed' %}bg-success{% elif payment.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ payment.status }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="mb-1"><strong>Amount:</strong> ${{ payment.amount }}</p>
+                                    <p class="mb-1"><strong>Method:</strong> {{ payment.payment_method }}</p>
+                                    <p class="mb-1"><strong>Date:</strong> {{ payment.payment_date.strftime('%d %b %Y, %H:%M') }}</p>
+                                    <p class="mb-0"><strong>Transaction ID:</strong> {{ payment.transaction_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

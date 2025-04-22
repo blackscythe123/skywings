@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-user-circle me-2"></i> My Profile</h1>
+        <p class="lead">Manage your personal information and preferences</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <!-- Profile Summary -->
+            <div class="card bg-dark mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-avatar mx-auto mb-3">
+                        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                    </div>
+                    <h4>{{ current_user.first_name }} {{ current_user.last_name }}</h4>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    <p class="mb-0">Member since {{ current_user.date_joined.strftime('%B %Y') }}</p>
+                </div>
+            </div>
+            
+            <!-- Frequent Flyer -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-medal me-2"></i> Frequent Flyer Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <span class="badge bg-{{ 'info' if current_user.frequent_flyer_status == 'Silver' else 'warning' if current_user.frequent_flyer_status == 'Gold' else 'danger' if current_user.frequent_flyer_status == 'Platinum' else 'secondary' }} fs-6 px-3 py-2">
+                            {{ current_user.frequent_flyer_status }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Miles</label>
+                        <div class="progress" role="progressbar" aria-valuenow="{{ current_user.frequent_flyer_miles }}" aria-valuemin="0" aria-valuemax="50000">
+                            {% set progress = (current_user.frequent_flyer_miles / 50000 * 100) %}
+<div class="progress-bar bg-info" style="width: {{ progress if progress <= 100 else 100 }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small>{{ current_user.frequent_flyer_miles }} miles</small>
+                            {% if current_user.frequent_flyer_status != 'Platinum' %}
+                                {% if current_user.frequent_flyer_status == 'Gold' %}
+                                <small>{{ 50000 - current_user.frequent_flyer_miles }} miles to Platinum</small>
+                                {% elif current_user.frequent_flyer_status == 'Silver' %}
+                                <small>{{ 25000 - current_user.frequent_flyer_miles }} miles to Gold</small>
+                                {% else %}
+                                <small>{{ 10000 - current_user.frequent_flyer_miles }} miles to Silver</small>
+                                {% endif %}
+                            {% else %}
+                                <small>Highest tier achieved</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-secondary bg-opacity-25 mb-3">
+                        <div class="card-body p-3">
+                            <h6>Status Benefits</h6>
+                            <ul class="mb-0 ps-3">
+                                {% if current_user.frequent_flyer_status == 'Standard' %}
+                                <li>Earn 1 mile per $10 spent</li>
+                                <li>Access to exclusive promotions</li>
+                                {% elif current_user.frequent_flyer_status == 'Silver' %}
+                                <li>Earn 1.2 miles per $10 spent</li>
+                                <li>5% discount on all bookings</li>
+                                <li>Priority customer service</li>
+                                {% elif current_user.frequent_flyer_status == 'Gold' %}
+                                <li>Earn 1.5 miles per $10 spent</li>
+                                <li>10% discount on all bookings</li>
+                                <li>Priority boarding</li>
+                                <li>Complimentary seat selection</li>
+                                {% else %}
+                                <li>Earn 2 miles per $10 spent</li>
+                                <li>15% discount on all bookings</li>
+                                <li>Priority boarding and check-in</li>
+                                <li>Complimentary upgrades when available</li>
+                                <li>Dedicated customer service line</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for booking in current_user.bookings[:3] %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div>{{ booking.flight.flight_number }}</div>
+                                <small class="text-muted">{{ booking.flight.departure_time.strftime('%d %b %Y') }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if booking.status == 'Confirmed' else 'warning' if booking.status == 'Reserved' else 'danger' }}">
+                                {{ booking.status }}
+                            </span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center py-4">
+                            <p class="mb-0 text-muted">No recent activity</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if current_user.bookings|length > 3 %}
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('routes.my_bookings') }}" class="btn btn-sm btn-outline-info">
+                        View All Bookings
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Profile Stats -->
+            <div class="profile-stats mb-4">
+                <div class="stat-card">
+                    <div class="stat-value">{{ current_user.bookings|length }}</div>
+                    <div class="stat-name">Total Bookings</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-value">{{ current_user.frequent_flyer_miles }}</div>
+                    <div class="stat-name">Miles Earned</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-value">
+                        {% set active_bookings = current_user.bookings|selectattr('status', 'equalto', 'Confirmed')|list %}
+                        {{ active_bookings|length }}
+                    </div>
+                    <div class="stat-name">Active Bookings</div>
+                </div>
+            </div>
+            
+            <!-- Personal Information -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-id-card me-2"></i> Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('routes.update_profile') }}" method="POST">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ current_user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ current_user.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" value="{{ current_user.email }}" disabled>
+                                <div class="form-text">Email cannot be changed</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone_number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" value="{{ current_user.phone_number or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ current_user.date_of_birth.strftime('%Y-%m-%d') if current_user.date_of_birth else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nationality" class="form-label">Nationality</label>
+                                <input type="text" class="form-control" id="nationality" name="nationality" value="{{ current_user.nationality or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ current_user.address or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="passport_number" class="form-label">Passport Number</label>
+                            <input type="text" class="form-control" id="passport_number" name="passport_number" value="{{ current_user.passport_number or '' }}">
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+<!-- Account Settings -->
+<div class="card bg-dark">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Account Settings</h5>
+    </div>
+    <div class="card-body">
+        <!-- Change Password -->
+        <div class="mb-4">
+            <h6>Change Password</h6>
+            <form action="{{ url_for('routes.change_password') }}" method="POST">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-key me-2"></i> Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <hr>
+
+        <!-- Email Preferences -->
+<div class="mb-3">
+    <h6>Email Preferences</h6>
+    <form action="{{ url_for('routes.save_preferences') }}" method="POST">
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="booking_notifications" 
+                   name="booking_notifications" {{ 'checked' if current_user.booking_notifications else '' }}>
+            <label class="form-check-label" for="booking_notifications">Booking Confirmations and Updates</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="promotional_emails" 
+                   name="promotional_emails" {{ 'checked' if current_user.promotional_emails else '' }}>
+            <label class="form-check-label" for="promotional_emails">Promotional Emails and Offers</label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="newsletter" 
+                   name="newsletter" {{ 'checked' if current_user.newsletter else '' }}>
+            <label class="form-check-label" for="newsletter">Newsletter</label>
+        </div>
+        <div class="text-end">
+            <button type="submit" class="btn btn-info">
+                <i class="fas fa-save me-2"></i> Save Preferences
+            </button>
+        </div>
+    </form>
+</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

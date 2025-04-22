@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-credit-card me-2"></i> Payment</h1>
+        <p class="lead">Complete your booking by providing payment details</p>
+    </div>
+
+    <div class="row">
+        <!-- Payment Form -->
+        <div class="col-lg-8">
+            <form action="{{ url_for('routes.process_payment') }}" method="POST">
+                <!-- Payment Methods -->
+                <div class="card bg-dark mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment Method</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="payment-methods">
+                            <div class="payment-method-card selected" onclick="selectPaymentMethod(this, 'credit_card')">
+                                <i class="far fa-credit-card"></i>
+                                <div>Credit Card</div>
+                            </div>
+                            <div class="payment-method-card" onclick="selectPaymentMethod(this, 'debit_card')">
+                                <i class="fas fa-credit-card"></i>
+                                <div>Debit Card</div>
+                            </div>
+                            <div class="payment-method-card" onclick="selectPaymentMethod(this, 'paypal')">
+                                <i class="fab fa-paypal"></i>
+                                <div>PayPal</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="payment_method" name="payment_method" value="credit_card">
+                    </div>
+                </div>
+                
+                <!-- Credit Card Details -->
+                <div id="credit_card_form" class="card bg-dark mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Card Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="card_name" class="form-label">Name on Card <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="card_name" placeholder="Enter name as shown on card" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="card_number" class="form-label">Card Number <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="card_number" placeholder="XXXX XXXX XXXX XXXX" required>
+                                    <span class="input-group-text">
+                                        <i class="fab fa-cc-visa me-2"></i>
+                                        <i class="fab fa-cc-mastercard me-2"></i>
+                                        <i class="fab fa-cc-amex"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="expiry_date" class="form-label">Expiry Date <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="expiry_date" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cvv" class="form-label">CVV <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cvv" placeholder="XXX" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Billing Address -->
+                <div class="card bg-dark mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Billing Address</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="address_line1" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="address_line1" placeholder="Street address" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="address_line2" class="form-label">Address Line 2</label>
+                                <input type="text" class="form-control" id="address_line2" placeholder="Apartment, suite, unit, etc. (optional)">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="city" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="state" class="form-label">State/Province <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="state" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="zip_code" class="form-label">Zip/Postal Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="zip_code" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
+                                <select class="form-select" id="country" required>
+                                    <option value="">Select Country</option>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="FR">France</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="JP">Japan</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Terms and Conditions -->
+                <div class="card bg-dark mb-4">
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if not current_user.is_authenticated %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> You are not logged in. <a href="{{ url_for('routes.login') }}">Login</a> or <a href="{{ url_for('routes.register') }}">Register</a> to track your bookings and earn frequent flyer miles.
+                </div>
+                {% endif %}
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-info btn-lg">Complete Payment</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card bg-dark sticky-top" style="top: 20px; z-index: 1">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i> Payment Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="mb-3">Booking Details</h6>
+                        <p class="mb-1"><strong>Booking:</strong> Flight Tickets</p>
+                        <p class="mb-1"><strong>Passengers:</strong> {{ session.get('passenger_data', {})|length }}</p>
+                        <p class="mb-1"><strong>Flight(s):</strong> 
+                            {% for flight_id in session.get('selected_seats', {}) %}
+                                {{ flight_id }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-2">Price Summary</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>Flight Tickets</span>
+                                <span>${{ total_price }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>Taxes & Fees</span>
+                                <span>Included</span>
+                            </li>
+                            {% if current_user.is_authenticated and current_user.frequent_flyer_status != 'Standard' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 text-success">
+                                <span>{{ current_user.frequent_flyer_status }} Member Discount</span>
+                                <span>-${{ (total_price * (0.05 if current_user.frequent_flyer_status == 'Silver' else 0.1 if current_user.frequent_flyer_status == 'Gold' else 0.15))|round(2) }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-5">Total Price:</span>
+                            <span class="fs-5 fw-bold text-info">${{ 
+                                (total_price - 
+                                (total_price * 0.15 if current_user.frequent_flyer_status == 'Platinum' else 
+                                 total_price * 0.1 if current_user.frequent_flyer_status == 'Gold' else 
+                                 total_price * 0.05 if current_user.frequent_flyer_status == 'Silver' else 0)) | round(2)
+                            }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Booking and Payment</h6>
+                <p>All bookings are subject to availability and acceptance by SkyWings. Payment must be made in full at the time of booking.</p>
+                
+                <h6>2. Cancellation and Refunds</h6>
+                <p>Cancellation policies vary depending on the fare type and how far in advance the cancellation is made:</p>
+                <ul>
+                    <li>Cancellations made more than 7 days before departure: 90% refund</li>
+                    <li>Cancellations made 3-7 days before departure: 70% refund</li>
+                    <li>Cancellations made 1-3 days before departure: 50% refund</li>
+                    <li>Cancellations made less than 24 hours before departure: No refund</li>
+                </ul>
+                
+                <h6>3. Changes to Bookings</h6>
+                <p>Changes to bookings may be subject to fees depending on the fare type and availability.</p>
+                
+                <h6>4. Travel Documents</h6>
+                <p>Passengers are responsible for ensuring they have all necessary travel documents, including passports, visas, and health certificates.</p>
+                
+                <h6>5. Baggage</h6>
+                <p>Baggage allowances vary depending on the fare type and class of travel. Additional fees may apply for excess baggage.</p>
+                
+                <h6>6. Liability</h6>
+                <p>SkyWings' liability is limited in accordance with applicable international conventions and regulations.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Information We Collect</h6>
+                <p>We collect personal information necessary for booking and managing flights, including name, contact details, payment information, and travel preferences.</p>
+                
+                <h6>2. How We Use Your Information</h6>
+                <p>We use your information to process bookings, provide customer service, comply with legal requirements, and improve our services.</p>
+                
+                <h6>3. Information Sharing</h6>
+                <p>We may share your information with third parties such as airlines, airports, and payment processors to fulfill your booking.</p>
+                
+                <h6>4. Data Security</h6>
+                <p>We implement appropriate security measures to protect your personal information.</p>
+                
+                <h6>5. Your Rights</h6>
+                <p>You have the right to access, correct, and delete your personal information, subject to legal requirements.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function selectPaymentMethod(element, method) {
+        // Remove selected class from all payment methods
+        document.querySelectorAll('.payment-method-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked element
+        element.classList.add('selected');
+        
+        // Update hidden input
+        document.getElementById('payment_method').value = method;
+        
+        // Show/hide appropriate form
+        if (method === 'credit_card' || method === 'debit_card') {
+            document.getElementById('credit_card_form').style.display = 'block';
+        } else {
+            document.getElementById('credit_card_form').style.display = 'none';
+        }
+    }
+    
+    // Format credit card number with spaces
+    document.getElementById('card_number').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        let formattedValue = '';
+        
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) {
+                formattedValue += ' ';
+            }
+            formattedValue += value[i];
+        }
+        
+        e.target.value = formattedValue;
+    });
+    
+    // Format expiry date with slash
+    document.getElementById('expiry_date').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9]/gi, '');
+        
+        if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        
+        e.target.value = value;
+    });
+    
+    // Limit CVV to 3 or 4 digits
+    document.getElementById('cvv').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9]/gi, '');
+        e.target.value = value.substring(0, 4);
+    });
+    
+    // Auto-fill billing address from user profile if logged in
+    {% if current_user.is_authenticated and current_user.address %}
+    document.addEventListener('DOMContentLoaded', function() {
+        const addressParts = '{{ current_user.address }}'.split(',');
+        
+        if (addressParts.length >= 2) {
+            document.getElementById('address_line1').value = addressParts[0].trim();
+            
+            if (addressParts.length >= 3) {
+                document.getElementById('city').value = addressParts[1].trim();
+                
+                const stateZip = addressParts[2].trim().split(' ');
+                if (stateZip.length >= 2) {
+                    document.getElementById('state').value = stateZip[0];
+                    document.getElementById('zip_code').value = stateZip[1];
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Passenger Details - SkyWings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-users me-2"></i> Passenger Details</h1>
+        <p class="lead">Please provide details for all passengers</p>
+    </div>
+
+    <div class="row">
+        <!-- Passenger Forms -->
+        <div class="col-lg-8">
+            <form action="{{ url_for('routes.process_passengers') }}" method="POST">
+                <input type="hidden" name="departure_flight_id" value="{{ departure_flight.id }}">
+                {% if return_flight %}
+                <input type="hidden" name="return_flight_id" value="{{ return_flight.id }}">
+                {% endif %}
+                <input type="hidden" name="passenger_count" value="{{ departure_seats|length }}">
+                
+                <!-- Flight Summary -->
+                <div class="card bg-dark mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Flight Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Departure Flight</h6>
+                                <p class="mb-1"><strong>Flight:</strong> {{ departure_flight.flight_number }}</p>
+                                <p class="mb-1"><strong>From:</strong> {{ departure_flight.origin_airport.city }} ({{ departure_flight.origin_airport.code }})</p>
+                                <p class="mb-1"><strong>To:</strong> {{ departure_flight.destination_airport.city }} ({{ departure_flight.destination_airport.code }})</p>
+                                <p class="mb-1"><strong>Date:</strong> {{ departure_flight.departure_time.strftime('%d %b %Y') }}</p>
+                                <p class="mb-1"><strong>Time:</strong> {{ departure_flight.departure_time.strftime('%H:%M') }} - {{ departure_flight.arrival_time.strftime('%H:%M') }}</p>
+                                <p class="mb-1"><strong>Selected Seats:</strong> 
+                                    {% for seat in departure_seats %}
+                                        <span class="badge bg-info">{{ seat.seat_number }}</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            {% if return_flight %}
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Return Flight</h6>
+                                <p class="mb-1"><strong>Flight:</strong> {{ return_flight.flight_number }}</p>
+                                <p class="mb-1"><strong>From:</strong> {{ return_flight.origin_airport.city }} ({{ return_flight.origin_airport.code }})</p>
+                                <p class="mb-1"><strong>To:</strong> {{ return_flight.destination_airport.city }} ({{ return_flight.destination_airport.code }})</p>
+                                <p class="mb-1"><strong>Date:</strong> {{ return_flight.departure_time.strftime('%d %b %Y') }}</p>
+                                <p class="mb-1"><strong>Time:</strong> {{ return_flight.departure_time.strftime('%H:%M') }} - {{ return_flight.arrival_time.strftime('%H:%M') }}</p>
+                                <p class="mb-1"><strong>Selected Seats:</strong> 
+                                    {% for seat in return_seats %}
+                                        <span class="badge bg-info">{{ seat.seat_number }}</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Passenger Forms -->
+                {% for i in range(1, departure_seats|length + 1) %}
+                <div class="passenger-form mb-4">
+                    <div class="passenger-header">
+                        <h5 class="mb-0">Passenger {{ i }}</h5>
+                        {% if i == 1 %}
+                        <span class="badge bg-info">Lead Passenger</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name_{{ i }}" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="first_name_{{ i }}" name="first_name_{{ i }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name_{{ i }}" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="last_name_{{ i }}" name="last_name_{{ i }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="dob_{{ i }}" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="dob_{{ i }}" name="dob_{{ i }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nationality_{{ i }}" class="form-label">Nationality <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nationality_{{ i }}" name="nationality_{{ i }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="passport_{{ i }}" class="form-label">Passport Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="passport_{{ i }}" name="passport_{{ i }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="special_requests_{{ i }}" class="form-label">Special Requests</label>
+                            <select class="form-select" id="special_requests_{{ i }}" name="special_requests_{{ i }}">
+                                <option value="">None</option>
+                                <option value="Wheelchair assistance">Wheelchair assistance</option>
+                                <option value="Vegetarian meal">Vegetarian meal</option>
+                                <option value="Vegan meal">Vegan meal</option>
+                                <option value="Kosher meal">Kosher meal</option>
+                                <option value="Halal meal">Halal meal</option>
+                                <option value="Child meal">Child meal</option>
+                                <option value="Diabetic meal">Diabetic meal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-info btn-lg">Continue to Payment</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card bg-dark sticky-top" style="top: 20px; z-index: 1">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i> Booking Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="mb-3">Selected Flights</h6>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flight-logo me-3">
+                                <i class="fas fa-plane"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ departure_flight.flight_number }}</div>
+                                <div class="text-muted small">{{ departure_flight.origin_airport.code }} to {{ departure_flight.destination_airport.code }}</div>
+                                <div class="text-muted small">{{ departure_flight.departure_time.strftime('%d %b %Y, %H:%M') }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if return_flight %}
+                        <div class="d-flex align-items-center">
+                            <div class="flight-logo me-3">
+                                <i class="fas fa-plane"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ return_flight.flight_number }}</div>
+                                <div class="text-muted small">{{ return_flight.origin_airport.code }} to {{ return_flight.destination_airport.code }}</div>
+                                <div class="text-muted small">{{ return_flight.departure_time.strftime('%d %b %Y, %H:%M') }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-3">Passengers</h6>
+                        <p>{{ departure_seats|length }} Passenger{% if departure_seats|length > 1 %}s{% endif %}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="mb-2">Price Summary</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>Departure Flight</span>
+                                <span>${{ (departure_seats|sum(attribute='price') if departure_seats else total_price / 2)|round(2) }}</span>
+                            </li>
+                            {% if return_flight %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>Return Flight</span>
+                                <span>${{ (return_seats|sum(attribute='price_per_person') if return_seats|sum(attribute='price_per_person') else total_price / 2)|round(2) }}</span>
+                            </li>
+                            {% endif %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>Taxes & Fees</span>
+                                <span>Included</span>
+                            </li>
+                            {% if current_user.is_authenticated and current_user.frequent_flyer_status != 'Standard' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 text-success">
+                                <span>{{ current_user.frequent_flyer_status }} Member Discount</span>
+                                <span>-${{ (total_price * (0.05 if current_user.frequent_flyer_status == 'Silver' else 0.1 if current_user.frequent_flyer_status == 'Gold' else 0.15))|round(2) }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-5">Total Price:</span>
+                            <span class="fs-5 fw-bold text-info">${{ 
+                                total_price - 
+                                (total_price * 0.15 if current_user.frequent_flyer_status == 'Platinum' else 
+                                 total_price * 0.1 if current_user.frequent_flyer_status == 'Gold' else 
+                                 total_price * 0.05 if current_user.frequent_flyer_status == 'Silver' else 0) 
+                            }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-fill passenger details from user profile if logged in
+        {% if current_user.is_authenticated %}
+        const firstNameInput = document.getElementById('first_name_1');
+        const lastNameInput = document.getElementById('last_name_1');
+        const nationalityInput = document.getElementById('nationality_1');
+        const passportInput = document.getElementById('passport_1');
+        const dobInput = document.getElementById('dob_1');
+        
+        if (firstNameInput && '{{ current_user.first_name }}') {
+            firstNameInput.value = '{{ current_user.first_name }}';
+        }
+        
+        if (lastNameInput && '{{ current_user.last_name }}') {
+            lastNameInput.value = '{{ current_user.last_name }}';
+        }
+        
+        if (nationalityInput && '{{ current_user.nationality }}') {
+            nationalityInput.value = '{{ current_user.nationality }}';
+        }
+        
+        if (passportInput && '{{ current_user.passport_number }}') {
+            passportInput.value = '{{ current_user.passport_number }}';
+        }
+        
+        if (dobInput && '{{ current_user.date_of_birth }}') {
+            dobInput.value = '{{ current_user.date_of_birth }}';
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}
