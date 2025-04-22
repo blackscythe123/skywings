@@ -17,6 +17,8 @@ SkyWings is a comprehensive flight booking system that allows users to search, b
 - **Admin Dashboard**: Comprehensive management tools for flights, users, and bookings
 - **Email Notifications**: Automated notifications for bookings, weather alerts, and flight updates
 - **Reporting**: Detailed analytics and reporting
+- **Frequent Flyer Program**: Earn and redeem miles, automatic status updates, and admin/manual correction tools
+- **Bulk Data Injection**: Scripts for large-scale test data and frequent flyer status correction
 
 ## Technology Stack
 
@@ -34,26 +36,36 @@ SkyWings is a comprehensive flight booking system that allows users to search, b
 
 ```
 skywings/
-├── app.py                # Main application configuration
-├── main.py               # Application entry point
-├── models.py             # Database models
-├── routes.py             # Application routes and logic
-├── chatbot.py            # AI chatbot implementation
-├── weather_monitor.py    # Weather monitoring system
-├── weather_service.py    # Weather API integration
-├── flight_status_updater.py # Flight status management
-├── extensions.py         # Flask extensions
-├── utils.py             # Utility functions
-├── requirements.txt      # Python dependencies
-├── static/              # Static files (CSS, JS, images)
+├── app.py                        # Main application configuration and entry point
+├── routes.py                     # Application routes and logic (user, admin, booking, payment, etc.)
+├── models.py                     # Database models
+├── chatbot.py                    # AI chatbot implementation and logic
+├── chatbot_routes.py             # Chatbot Flask blueprint
+├── extensions.py                 # Flask extensions (db, mail, etc.)
+├── utils.py                      # Utility functions (pricing, seat map, etc.)
+├── requirements.txt              # Python dependencies
+├── large_injection.py            # Script for large-scale data injection
+├── fix_frequent_flyer_status.py  # Script to fix frequent flyer status for all users
+├── static/                       # Static files (CSS, JS, images)
 │   ├── css/
 │   ├── js/
 │   └── images/
-└── templates/           # HTML templates
-    ├── admin/           # Admin interface templates
-    ├── chatbot/         # Chatbot interface templates
-    ├── user/            # User interface templates
-    └── ...
+├── templates/                    # HTML templates
+│   ├── base.html
+│   ├── index.html
+│   ├── confirmation.html
+│   ├── manage_bookings.html
+│   ├── admin/
+│   │   ├── users.html
+│   │   ├── user_bookings.html
+│   │   ├── bookings.html
+│   │   ├── flights.html
+│   │   ├── airports.html
+│   │   ├── aircraft.html
+│   │   └── ... (other admin templates)
+│   └── ... (other templates)
+├── README.md                     # This file
+└── ... (other scripts and files)
 ```
 
 ## Installation & Setup
@@ -67,27 +79,30 @@ skywings/
 
 ### Setup Instructions
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/yourusername/skywings.git
    cd skywings
    ```
 
-2. Create and activate a virtual environment:
+2. **Create and activate a virtual environment:**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
    ```
 
-3. Install dependencies:
+3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Set up environment variables:
+4. **Set up environment variables:**
    Create a `.env` file in the root directory with the following variables:
    ```
-   DATABASE_URL=postgresql://username:password@localhost/skywings
+   DATABASE_URL=sqlite:///flight_booking.db
    SESSION_SECRET=your-secret-key-here
    MAIL_USERNAME=your-email@gmail.com
    MAIL_PASSWORD=your-email-password
@@ -95,21 +110,22 @@ skywings/
    STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
    OPENROUTER_API_KEY=your-openrouter-api-key
    OPENWEATHER_API_KEY=your-openweather-api-key
+   UNSPLASH_ACCESS_KEY=your-unsplash-access-key
    ```
 
-5. Initialize the database:
+5. **Initialize the database:**
    ```bash
    flask shell
+   >>> from app import db
    >>> db.create_all()
    >>> exit()
    ```
 
-6. Run the application:
+6. **Run the application:**
    ```bash
-   python main.py
+   python app.py
    ```
-
-7. Access the application at `http://localhost:5500`
+   Access the application at [http://localhost:5500](http://localhost:5500)
 
 ## Database Initialization
 
@@ -117,8 +133,14 @@ To populate the database with sample data, visit:
 ```
 http://localhost:5500/init-db
 ```
-
-**Note:** This route is only available in debug mode.
+Or run:
+```bash
+python large_injection.py
+```
+To fix frequent flyer status for all users:
+```bash
+python fix_frequent_flyer_status.py
+```
 
 ## Key API Endpoints
 
@@ -141,13 +163,23 @@ http://localhost:5500/init-db
 
 ### Admin Endpoints
 - `GET /admin` - Admin dashboard
-- `GET /admin/reports` - System reports
-- Various CRUD endpoints for flights, users, bookings, etc.
+- `GET /admin/users` - Manage users (search, filter, sort, edit, delete, update frequent flyer status)
+- `GET /admin/flights` - Manage flights
+- `GET /admin/bookings` - Manage bookings
+- `GET /admin/airports` - Manage airports
+- `GET /admin/aircraft` - Manage aircraft
+- `GET /admin/reports` - System reports and analytics
 
 ### Chatbot API
 - `POST /chatbot` - Process chatbot messages
 - `POST /clear_chat` - Clear chat history
 - `GET /get_chat_history` - Retrieve chat history
+
+## Frequent Flyer Program
+
+- **Automatic Status Update:** User status (Standard, Silver, Gold, Platinum) is updated automatically based on miles after each booking.
+- **Admin Correction:** Admins can manually update user status and miles from the admin panel.
+- **Batch Fix:** Use `fix_frequent_flyer_status.py` to correct all user statuses in bulk.
 
 ## Configuration Options
 
@@ -185,14 +217,12 @@ app.config['WEATHER_CHECK_INTERVAL'] = 300  # 5 minutes
 ### Background Services
 
 #### Weather Monitoring System
-Implemented in `weather_monitor.py` and `weather_service.py`:
 - Real-time weather tracking for all flight routes
 - Automatic alerts for severe weather conditions
 - Integration with OpenWeather API
 - Proactive flight status updates based on weather
 
 #### Flight Status Updater
-Implemented in `flight_status_updater.py`:
 - Automatic status updates for completed flights
 - Background thread processing
 - Database consistency maintenance
@@ -200,37 +230,28 @@ Implemented in `flight_status_updater.py`:
 
 ### AI Chatbot Implementation
 
-The chatbot uses the OpenRouter API with the DeepSeek model to provide intelligent flight search and booking assistance. Key features:
-
 - Natural language processing for flight searches
 - Context-aware conversations
 - Database integration for real-time flight information
 - Booking confirmation handling
-
-Chatbot logic is implemented in `chatbot.py` with routes in `routes.py`.
+- Chatbot logic in `chatbot.py` and `chatbot_routes.py`
 
 ### Payment Processing
 
-The system uses Stripe for secure payment processing. Key features:
-
+- Stripe for secure payment processing
 - Credit card payments through Stripe Checkout
 - Frequent flyer discounts
 - Payment verification and error handling
 - Automatic receipt generation
-- Secure payment session management
 
 ### Email Notification System
 
-The application sends various automated notifications using Flask-Mail:
-
 - Booking confirmations and e-tickets
 - Weather alerts and flight status updates
-- Login security notifications
+- Login/logout security notifications
 - System alerts and reports
 
 ### Reporting System
-
-The admin dashboard includes comprehensive reporting:
 
 - Booking trends and analytics
 - Revenue reports and forecasts
@@ -238,6 +259,13 @@ The admin dashboard includes comprehensive reporting:
 - Flight status statistics
 - Flight utilization
 - User growth metrics
+
+## Development & Contribution
+
+- Use feature branches for new features or bug fixes.
+- Run `python large_injection.py` for large-scale test data.
+- Use `python fix_frequent_flyer_status.py` to batch-correct frequent flyer statuses.
+- Use `git status` and `git add` to stage only the files you want to commit.
 
 ## Deployment
 
@@ -248,14 +276,6 @@ For production deployment:
 3. Set up a reverse proxy (Nginx, Apache)
 4. Configure production email settings
 5. Set `DEBUG=False` in production
-
-## Future Enhancements
-
-- Mobile app integration
-- Additional payment methods
-- Enhanced frequent flyer program
-- Real-time flight status updates
-- Multi-language support
 
 ## License
 
