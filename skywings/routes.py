@@ -28,7 +28,7 @@ from chatbot import handle_chatbot_message
 load_dotenv()
 
 # Load Stripe and Hugging Face API keys
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY","sk_test_51R5td12KasUIkcLCCArTAjD95BcWlURVW6eODRhywLyq7IhTSRS6ZioGMCtJTH1CBFwcFvOT7wl3hS7YIYk5SQbE00IsBZB01M  ")
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 # HF_API_KEY = os.getenv("HF_API_KEY")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -68,7 +68,7 @@ def index():
     from flask import current_app
     import random
     load_dotenv()
-    unsplash_access_key = current_app.config.get("UNSPLASH_ACCESS_KEY", "aA4hhwnmCSs9PX2jVYVqkwB04gRYlHibNKxMKZ3v2fE")
+    unsplash_access_key = current_app.config.get("UNSPLASH_ACCESS_KEY")
 
     if not unsplash_access_key:
         print("Unsplash Access Key not found in configuration!")
