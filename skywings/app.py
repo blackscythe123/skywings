@@ -73,8 +73,8 @@ weather_monitor = None
 def init_background_tasks():
     global flight_status_updater, weather_monitor
     try:
-        # flight_status_updater = init_flight_status_updater(app)
-        # weather_monitor = init_weather_monitor(app)
+        flight_status_updater = init_flight_status_updater(app)
+        weather_monitor = init_weather_monitor(app)
         # from test_weather_monitor import init_test_weather_monitor
         # weather_monitor = init_test_weather_monitor(app)
         logging.info("Background tasks initialized successfully")

@@ -36,7 +36,7 @@
         <p class="lead mb-4">Thank you for booking with SkyWings. Your reservation is confirmed and ready to go.</p>
         <div class="booking-reference">
             {% for booking in bookings %}
-                {{ booking.booking_reference }}{% if not loop.last %}, {% endif %}
+                {{ booking.booking_reference|escape }}{% if not loop.last %}, {% endif %}
             {% endfor %}
         </div>
         <p class="text-muted">Please save your booking reference(s) for future reference.</p>
@@ -44,34 +44,50 @@
     
     <div class="row g-4 mt-4">
         <div class="col-lg-8 mx-auto">
-            <!-- Timeline for Round Trips -->
-            {% if bookings|length > 1 %}
+            <!-- Timeline for All Bookings -->
             <div class="timeline mb-5">
                 <h4 class="text-center mb-4">Your Journey</h4>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-center">
-                        <div class="fw-bold">{{ bookings[0].flight.origin_airport.city }}</div>
-                        <div class="text-muted">{{ bookings[0].flight.departure_time.strftime('%d %b %Y') }}</div>
+                {% if bookings|length > 1 %}
+                    <!-- Round Trip Timeline -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-center">
+                            <div class="fw-bold">{{ bookings[0].flight.origin_airport.city|escape }}</div>
+                            <div class="text-muted">{{ bookings[0].flight.departure_time.strftime('%d %b %Y') }}</div>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-plane mx-3"></i>
+                            <div class="fw-bold">{{ bookings[0].flight.destination_airport.city|escape }}</div>
+                            <i class="fas fa-plane mx-3"></i>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold">{{ bookings[1].flight.origin_airport.city|escape }}</div>
+                            <div class="text-muted">{{ bookings[1].flight.departure_time.strftime('%d %b %Y') }}</div>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <i class="fas fa-plane mx-3"></i>
-                        <div class="fw-bold">{{ bookings[0].flight.destination_airport.city }}</div>
-                        <i class="fas fa-plane mx-3"></i>
+                {% else %}
+                    <!-- One-Way Trip Timeline -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-center">
+                            <div class="fw-bold">{{ bookings[0].flight.origin_airport.city|escape }}</div>
+                            <div class="text-muted">{{ bookings[0].flight.departure_time.strftime('%d %b %Y') }}</div>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-plane mx-3"></i>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold">{{ bookings[0].flight.destination_airport.city|escape }}</div>
+                            <div class="text-muted">{{ bookings[0].flight.arrival_time.strftime('%d %b %Y') }}</div>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <div class="fw-bold">{{ bookings[1].flight.origin_airport.city }}</div>
-                        <div class="text-muted">{{ bookings[1].flight.departure_time.strftime('%d %b %Y') }}</div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
-            {% endif %}
 
             <!-- Loop through each booking (departure and return if applicable) -->
             {% for booking in bookings %}
             <div class="flight-details-box mb-5">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="mb-0">Flight Details - {{ 'Departure' if loop.first else 'Return' }}</h3>
-                    <span class="badge bg-success py-2 px-3">{{ booking.status }}</span>
+                    <span class="badge bg-success py-2 px-3">{{ booking.status|escape }}</span>
                 </div>
                 
                 <div class="d-flex align-items-center mb-4">
@@ -79,8 +95,8 @@
                         <i class="fas fa-plane"></i>
                     </div>
                     <div>
-                        <div class="fs-5 fw-bold">{{ booking.flight.flight_number }}</div>
-                        <div class="text-muted">{{ booking.flight.aircraft.model }}</div>
+                        <div class="fs-5 fw-bold">{{ booking.flight.flight_number|escape }}</div>
+                        <div class="text-muted">{{ booking.flight.aircraft.model|escape }}</div>
                     </div>
                 </div>
                 
@@ -89,8 +105,8 @@
                         <div class="text-center">
                             <div class="flight-time">{{ booking.flight.departure_time.strftime('%H:%M') }}</div>
                             <div class="text-muted">{{ booking.flight.departure_time.strftime('%d %b %Y') }}</div>
-                            <div class="airport-code">{{ booking.flight.origin_airport.code }}</div>
-                            <div class="text-muted">{{ booking.flight.origin_airport.city }}</div>
+                            <div class="airport-code">{{ booking.flight.origin_airport.code|escape }}</div>
+                            <div class="text-muted">{{ booking.flight.origin_airport.city|escape }}</div>
                         </div>
                         
                         <div class="flight-path mx-4">
@@ -100,8 +116,8 @@
                         <div class="text-center">
                             <div class="flight-time">{{ booking.flight.arrival_time.strftime('%H:%M') }}</div>
                             <div class="text-muted">{{ booking.flight.arrival_time.strftime('%d %b %Y') }}</div>
-                            <div class="airport-code">{{ booking.flight.destination_airport.code }}</div>
-                            <div class="text-muted">{{ booking.flight.destination_airport.city }}</div>
+                            <div class="airport-code">{{ booking.flight.destination_airport.code|escape }}</div>
+                            <div class="text-muted">{{ booking.flight.destination_airport.city|escape }}</div>
                         </div>
                     </div>
                     
@@ -121,38 +137,37 @@
                             {% for detail in booking.booking_details %}
                             <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div>
-                                    <div class="fw-bold">{{ detail.passenger_first_name }} {{ detail.passenger_last_name }}</div>
-                                    <div class="text-muted small">Seat {{ detail.seat.seat_number }} ({{ detail.seat.seat_class }})</div>
+                                    <div class="fw-bold">{{ detail.passenger_first_name|escape }} {{ detail.passenger_last_name|escape }}</div>
+                                    <div class="text-muted small">Seat {{ detail.seat.seat_number|escape }} ({{ detail.seat.seat_class|escape }})</div>
                                     {% if detail.special_requests %}
-                                    <div class="badge bg-info mt-1">{{ detail.special_requests }}</div>
+                                    <div class="badge bg-info mt-1">{{ detail.special_requests|escape }}</div>
                                     {% endif %}
                                 </div>
                                 <div class="text-end">
                                     <div class="text-muted small">Passport</div>
-                                    <div>{{ detail.passenger_passport }}</div>
+                                    <div>{{ detail.passenger_passport|escape }}</div>
                                 </div>
                             </li>
                             {% endfor %}
                         </ul>
                     </div>
                     
-                        <div class="col-md-6">
-                            <h5 class="mb-3">Booking Details</h5>
-                            <ul class="list-unstyled">
-                                <li class="mb-2"><strong>Booking Date:</strong> {{ booking.booking_date.strftime('%d %b %Y, %H:%M') }}</li>
-                                <li class="mb-2"><strong>Payment Status:</strong> <span class="badge bg-success">{{ booking.payment_status }}</span></li>
-                                <li class="mb-2"><strong>Payment Method:</strong> Stripe</li>
-                                {% set discount_rate = 0.15 if current_user.frequent_flyer_status == 'Platinum' else 
-                                0.10 if current_user.frequent_flyer_status == 'Gold' else 
-                                0.05 if current_user.frequent_flyer_status == 'Silver' else
-                                0.00 %}
-                                <li class="mb-2"><strong>Total Paid:</strong> ${{ (1-discount_rate)*booking.total_price  }}</li>
-                                {% if current_user.is_authenticated %}
-                                <li class="mb-2"><strong>Frequent Flyer Miles Earned:</strong> {{ (booking.total_price / 10)|int }}</li>
-                                <li><strong>Current Status:</strong> <span class="badge bg-info">{{ current_user.frequent_flyer_status }}</span></li>
-                                {% endif %}
-                            </ul>
-                        </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Booking Details</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><strong>Booking Date:</strong> {{ booking.booking_date.strftime('%d %b %Y, %H:%M') }}</li>
+                            <li class="mb-2"><strong>Payment Status:</strong> <span class="badge bg-success">{{ booking.payment_status|escape }}</span></li>
+                            <li class="mb-2"><strong>Payment Method:</strong> Stripe</li>
+                            {% set discount_rate = 0.15 if current_user.frequent_flyer_status == 'Platinum' else 
+                                                  0.10 if current_user.frequent_flyer_status == 'Gold' else 
+                                                  0.05 if current_user.frequent_flyer_status == 'Silver' else 0.00 %}
+                            <li class="mb-2"><strong>Total Paid:</strong> ${{ ((1 - discount_rate) * booking.total_price)|round(2) }}</li>
+                            {% if current_user.is_authenticated %}
+                            <li class="mb-2"><strong>Frequent Flyer Miles Earned:</strong> {{ (booking.total_price / 10)|int }}</li>
+                            <li><strong>Current Status:</strong> <span class="badge bg-info">{{ current_user.frequent_flyer_status|escape }}</span></li>
+                            {% endif %}
+                        </ul>
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -190,33 +205,32 @@
             </div>
             
             <!-- Boarding Pass QR Code Section -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> Boarding Pass</h5>
-    </div>
-    <div class="card-body">
-        <!-- Centered QR Container -->
-        <div class="d-flex flex-column align-items-center">
-            <div id="boarding-pass-qrcode" class="mb-3"></div>
-            <div class="text-center">
-                {% for booking in bookings %}
-                    {% for detail in booking.booking_details %}
-                        <p class="mb-1"><strong>Passenger:</strong> {{ detail.passenger_first_name }} {{ detail.passenger_last_name }}</p>
-                        <p class="mb-1"><strong>Flight:</strong> {{ booking.flight.flight_number }}</p>
-                        <p class="mb-1"><strong>Date:</strong> {{ booking.flight.departure_time.strftime('%d %b %Y') }}</p>
-                        <p class="mb-1">
-                            <strong>From:</strong> {{ booking.flight.origin_airport.code }} 
-                            <i class="fas fa-arrow-right mx-2"></i> 
-                            <strong>To:</strong> {{ booking.flight.destination_airport.code }}
-                        </p>
-                        <p class="mb-1"><strong>Seat:</strong> {{ detail.seat.seat_number }}</p>
-                        <p class="mb-1"><strong>Booking Reference:</strong> {{ booking.booking_reference }}</p>
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> Boarding Passes</h5>
+                </div>
+                <div class="card-body">
+                    {% for booking in bookings %}
+                        {% for detail in booking.booking_details %}
+                            <div class="d-flex flex-column align-items-center mb-4">
+                                <div id="qrcode-{{ booking.booking_reference }}-{{ loop.index }}" class="mb-3"></div>
+                                <div class="text-center">
+                                    <p class="mb-1"><strong>Passenger:</strong> {{ detail.passenger_first_name|escape }} {{ detail.passenger_last_name|escape }}</p>
+                                    <p class="mb-1"><strong>Flight:</strong> {{ booking.flight.flight_number|escape }}</p>
+                                    <p class="mb-1"><strong>Date:</strong> {{ booking.flight.departure_time.strftime('%d %b %Y') }}</p>
+                                    <p class="mb-1">
+                                        <strong>From:</strong> {{ booking.flight.origin_airport.code|escape }} 
+                                        <i class="fas fa-arrow-right mx-2"></i> 
+                                        <strong>To:</strong> {{ booking.flight.destination_airport.code|escape }}
+                                    </p>
+                                    <p class="mb-1"><strong>Seat:</strong> {{ detail.seat.seat_number|escape }}</p>
+                                    <p class="mb-1"><strong>Booking Reference:</strong> {{ booking.booking_reference|escape }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
                     {% endfor %}
-                {% endfor %}
+                </div>
             </div>
-        </div>
-    </div>
-</div>
 
             <!-- Action Buttons -->
             <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
@@ -240,22 +254,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        const isLocal = window.location.hostname === '10.17.181.232' || 
-                       window.location.hostname === '127.0.0.1' ||
-                       /^10\.106\./.test(window.location.hostname);
-        
-        const baseUrl = isLocal ? 
-            `http://${window.location.hostname}:5500` : 
-            'https://your-production-domain.com';
+        // Force HTTP for 10.106.106.40:5500
+        const baseUrl = 'http://10.106.106.40:5500';
 
         {% for booking in bookings %}
             {% for detail in booking.booking_details %}
-              
-                const boardingPassUrl = `${baseUrl}/boarding-pass?ref={{ booking.booking_reference }}`;
-                
-                new QRCode(document.getElementById('boarding-pass-qrcode'), {
-                    text: boardingPassUrl,  
+                const boardingPassUrl = `${baseUrl}/boarding-pass?ref={{ booking.booking_reference|urlencode }}`;
+                new QRCode(document.getElementById('qrcode-{{ booking.booking_reference }}-{{ loop.index }}'), {
+                    text: boardingPassUrl,
                     width: 200,
                     height: 200
                 });

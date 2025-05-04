@@ -101,18 +101,23 @@
     </div>
 </section>
 <!-- Popular Destinations Section -->
-<section class="container mt-5">
-    <h2>Popular Destinations</h2>
-    <div class="destination-row">
-        {% for destination in popular_destinations %}
-        <div class="destination-card" style="background-image: url('{{ destination.image_url }}');">
-            <div class="overlay"></div>
-            <h3>{{ destination.city }}, {{ destination.country }}</h3>
-            <a href="{{ url_for('routes.search_flights', destination=destination.city) }}" class="btn btn-explore">Explore Flights</a>
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Popular Destinations</h2>
+    <div class="row justify-content-center">
+        {% for dest in popular_destinations %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <img src="{{ dest.image_url }}" class="card-img-top" alt="{{ dest.city }} image" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ dest.city }}, {{ dest.country }}</h5>
+                    <p class="card-text">{{ dest.name }}</p>
+                    <a href="{{ url_for('routes.search_flights', destination=dest.city) }}" class="btn btn-info">View Flights</a>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
-</section>
+</div>
 
 <!-- Features Section -->
 <section class="container mt-5">

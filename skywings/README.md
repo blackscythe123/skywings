@@ -280,3 +280,11 @@ For production deployment:
 ## License
 
 For any questions or support, please contact the development team at skywings102914@gmail.com
+
+```
+**Changelog:**
+- Updated for new scripts: `large_injection.py`, `fix_frequent_flyer_status.py`
+- Clarified admin/user management, frequent flyer logic, and chatbot features
+- Added instructions for batch status correction and large data injection
+- Updated project structure and setup steps
+```
