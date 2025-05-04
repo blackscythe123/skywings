@@ -2438,8 +2438,26 @@ def user_profile(user_id):
         return redirect(url_for('routes.index'))
     
     user = User.query.get_or_404(user_id)
-    bookings = Booking.query.filter_by(user_id=user.id).all()
-    return render_template('admin/user_bookings.html', user=user, bookings=bookings)
+    # Add pagination and sorting for bookings
+    page = request.args.get('page', 1, type=int)
+    sort = request.args.get('sort', 'date-desc')
+    query = Booking.query.filter_by(user_id=user.id)
+    if sort == 'date-desc':
+        query = query.order_by(Booking.booking_date.desc())
+    elif sort == 'date-asc':
+        query = query.order_by(Booking.booking_date.asc())
+    elif sort == 'price-desc':
+        query = query.order_by(Booking.total_price.desc())
+    elif sort == 'price-asc':
+        query = query.order_by(Booking.total_price.asc())
+    elif sort == 'status':
+        query = query.order_by(Booking.status.asc())
+    elif sort == 'payment':
+        query = query.order_by(Booking.payment_status.asc())
+    else:
+        query = query.order_by(Booking.booking_date.desc())
+    bookings = query.paginate(page=page, per_page=20)
+    return render_template('admin/user_bookings.html', user=user, bookings=bookings, sort=sort)
 
 @routes_bp.route('/process-payment', methods=['POST'])
 def process_payment():
