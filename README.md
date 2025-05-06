@@ -69,7 +69,7 @@ skywings/
 ```
 ## Reference
 
-refer the skywings_whitesheet for detailed analyse and work flow.
+- Refer the skywings_whitesheet for detailed analyse and work flow
 
 ## Installation & Setup
 
